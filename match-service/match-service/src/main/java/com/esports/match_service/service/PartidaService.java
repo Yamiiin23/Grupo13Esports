@@ -41,6 +41,7 @@ public class PartidaService {
         Partida guardada = partidaRepository.save(partida);
         log.info("[match-service] Partida agendada exitosamente con ID={}", guardada.getId());
 
+        // Forzamos el uso explícito de PartidaDTO.Response para evitar que el IDE busque otra clase externa
         return PartidaDTO.Response.fromEntity(guardada);
     }
 

@@ -58,6 +58,7 @@ public class PartidaDTO {
         private LocalDateTime fechaCreacion;
         private LocalDateTime fechaActualizacion;
 
+        // Usamos la ruta completa del paquete para que no falle la vinculación con el modelo
         public static Response fromEntity(com.esports.match_service.model.Partida partida) {
             return Response.builder()
                     .id(partida.getId())

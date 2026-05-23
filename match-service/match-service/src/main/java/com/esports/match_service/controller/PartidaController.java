@@ -18,45 +18,44 @@ public class PartidaController {
     private static final Logger log = LoggerFactory.getLogger(PartidaController.class);
     private final PartidaService partidaService;
 
+    // Inyección por constructor estándar
     public PartidaController(PartidaService partidaService) {
         this.partidaService = partidaService;
     }
 
     @PostMapping
-    public ResponseEntity<PartidaDTO.Response> crearPartida(
-            @Valid @RequestBody PartidaDTO.Request request) {
-        log.info("[match-service] POST /api/v1/partidas - registrando nuevo enfrentamiento");
+    public ResponseEntity<PartidaDTO.Response> crearPartida(@Valid @RequestBody PartidaDTO.Request request) {
+        log.info("[partida-service] POST /api/v1/partidas - Creando nueva partida");
         PartidaDTO.Response response = partidaService.crearPartida(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    public ResponseEntity<List<PartidaDTO.Response>> listarPartidas(
-            @RequestParam(required = false) Long torneoId) {
-        log.info("[match-service] GET /api/v1/partidas - filtro torneoId={}", torneoId);
+    public ResponseEntity<List<PartidaDTO.Response>> listarPartidas(@RequestParam(required = false) Long torneoId) {
+        log.info("[partida-service] GET /api/v1/partidas - Listando partidas (Filtro torneoId: {})", torneoId);
         List<PartidaDTO.Response> response = partidaService.listarPartidas(torneoId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PartidaDTO.Response> buscarPorId(@PathVariable Long id) {
-        log.info("[match-service] GET /api/v1/partidas/{}", id);
-        PartidaDTO.Response response = partidaService.buscarPorId(id);
+    public ResponseEntity<PartidaDTO.Response> obtenerPartidaPorId(@PathVariable Long id) {
+        log.info("[partida-service] GET /api/v1/partidas/{} - Buscando partida por ID", id);
+        PartidaDTO.Response response = partidaService.obtenerPartidaPorId(id);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}/resultado")
-    public ResponseEntity<PartidaDTO.Response> actualizarResultado(
+    public ResponseEntity<PartidaDTO.Response> registrarResultado(
             @PathVariable Long id,
-            @Valid @RequestBody PartidaDTO.UpdateResultRequest request) {
-        log.info("[match-service] PUT /api/v1/partidas/{}/resultado", id);
-        PartidaDTO.Response response = partidaService.actualizarResultado(id, request);
+            @Valid @RequestBody PartidaDTO.ResultRequest request) {
+        log.info("[partida-service] PUT /api/v1/partidas/{}/resultado - Registrando marcador final", id);
+        PartidaDTO.Response response = partidaService.registrarResultado(id, request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarPartida(@PathVariable Long id) {
-        log.info("[match-service] DELETE /api/v1/partidas/{}", id);
+        log.info("[partida-service] DELETE /api/v1/partidas/{} - Eliminando partida", id);
         partidaService.eliminarPartida(id);
         return ResponseEntity.noContent().build();
     }
