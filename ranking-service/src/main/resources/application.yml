@@ -1,0 +1,26 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: ranking-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/esports_ranking_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+    username: root
+    password: contraseña
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+    tournament-service:
+      url: http://localhost:8081
