@@ -288,7 +288,7 @@ mvn test
 
 ---
 
-## Patrones y buenas practicas aplicadas
+## Patrones 
 
 - **Patron CSR** - Controller / Service / Repository con separacion estricta de responsabilidades
 - **DTOs separados** de entidades para entrada y salida
