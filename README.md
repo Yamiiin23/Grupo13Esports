@@ -82,16 +82,16 @@ base de datos. La comunicacion entre servicios se realiza mediante REST usando O
 
 | Microservicio | Puerto | Base de datos | Descripcion |
 |---|---|---|---|
-| auth-service | 8081 | esports_auth_db | Autenticacion JWT + BCrypt |
-| user-service | 8082 | esports_user_db | Perfiles de jugadores y organizadores |
-| tournament-service | 8083 | esports_tournament_db | Torneos, fechas, cupos y estados |
+| auth-service | 8080 | esports_auth_db | Autenticacion JWT + BCrypt |
+| user-service | 8081 | esports_user_db | Perfiles de jugadores y organizadores |
+| tournament-service | 8084 | esports_tournament_db | Torneos, fechas, cupos y estados |
 | match-service | 8084 | esports_match_db | Partidas y enfrentamientos |
 | team-service | 8085 | esports_team_db | Equipos y miembros |
-| game-service | 8086 | esports_game_db | Videojuegos habilitados para torneos |
-| ranking-service | 8087 | esports_ranking_db | Tabla de posiciones |
-| sanction-service | 8088 | esports_sanction_db | Sanciones y bloqueos |
-| result-service | 8089 | esports_result_db | Resultados y validaciones |
-| registration-service | 8090 | esports_registration_db | Inscripciones a torneos |
+| game-service | 8082 | esports_game_db | Videojuegos habilitados para torneos |
+| ranking-service | 8088 | esports_ranking_db | Tabla de posiciones |
+| sanction-service | 8089 | esports_sanction_db | Sanciones y bloqueos |
+| result-service | 8087 | esports_result_db | Resultados y validaciones |
+| registration-service | 8086 | esports_registration_db | Inscripciones a torneos |
 
 ---
 
