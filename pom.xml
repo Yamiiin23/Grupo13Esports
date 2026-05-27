@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.esports</groupId>
+    <artifactId>esports-main-parent</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>auth-service</module>
+        <module>game-service</module>
+        <module>match-service</module>
+        <module>ranking-service</module>
+        <module>registration-service</module>
+        <module>result-service</module>
+        <module>sanction-service</module>
+        <module>team-service</module>
+        <module>tournament-service</module>
+        <module>user-service</module>
+    </modules>
+</project>
