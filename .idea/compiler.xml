@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Annotation profile for esports-main-parent" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+        </processorPath>
+        <module name="registration-service" />
+        <module name="auth-service" />
+        <module name="tournament-service" />
+        <module name="match-service" />
+        <module name="user-service" />
+        <module name="game-service" />
+      </profile>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="sanction-service" />
+        <module name="result-service" />
+        <module name="team-service" />
+        <module name="ranking-service" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="auth-service" options="-parameters" />
+      <module name="game-service" options="-parameters" />
+      <module name="match-service" options="-parameters" />
+      <module name="ranking-service" options="-parameters" />
+      <module name="registration-service" options="-parameters" />
+      <module name="result-service" options="-parameters" />
+      <module name="sanction-service" options="-parameters" />
+      <module name="team-service" options="-parameters" />
+      <module name="tournament-service" options="-parameters" />
+      <module name="user-service" options="-parameters" />
+    </option>
+  </component>
+</project>
