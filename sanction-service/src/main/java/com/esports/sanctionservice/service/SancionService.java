@@ -4,6 +4,7 @@ import com.esports.sanctionservice.client.TeamServiceClient;
 import com.esports.sanctionservice.client.UserServiceClient;
 import com.esports.sanctionservice.dto.SancionDTO;
 import com.esports.sanctionservice.exception.SancionNotFoundException;
+import com.esports.sanctionservice.exception.SancionValidationException;
 import com.esports.sanctionservice.exception.ServicioExternoException;
 import com.esports.sanctionservice.model.Sancion;
 import com.esports.sanctionservice.repository.SancionRepository;
@@ -21,36 +22,33 @@ import java.util.List;
 public class SancionService {
 
     private static final Logger log = LoggerFactory.getLogger(SancionService.class);
-
     private final SancionRepository  sancionRepository;
     private final UserServiceClient   userClient;
     private final TeamServiceClient   teamClient;
 
-    public SancionService(SancionRepository sancionRepository,
-                          UserServiceClient userClient,
-                          TeamServiceClient teamClient) {
+    public SancionService(SancionRepository sancionRepository, UserServiceClient userClient, TeamServiceClient teamClient) {
         this.sancionRepository = sancionRepository;
         this.userClient        = userClient;
         this.teamClient        = teamClient;
     }
 
     public SancionDTO.Response crearSancion(SancionDTO.Request request) {
-        log.info("[sanction-service] Creando sanción. usuarioId={}, equipoId={}, severidad={}",
-                request.getUsuarioId(), request.getEquipoId(), request.getSeveridad());
+        log.info("[sanction-service] Creando sanción. usuarioId={}, equipoId={}, severidad={}", request.getUsuarioId(), request.getEquipoId(), request.getSeveridad());
 
         if (request.getUsuarioId() == null && request.getEquipoId() == null) {
-            throw new IllegalArgumentException("La sanción debe tener al menos un destinatario: usuarioId o equipoId");
+            throw new SancionValidationException("La sanción debe tener al menos un destinatario: usuarioId o equipoId");
+        }
+        if (!request.getFechaFin().isAfter(request.getFechaInicio())) {
+            throw new SancionValidationException("La fecha de fin debe ser posterior a la fecha de inicio");
         }
 
-        if (!request.getFechaFin().isAfter(request.getFechaInicio())) {
-            throw new IllegalArgumentException("La fecha de fin debe ser posterior a la fecha de inicio");
-        }
         if (request.getUsuarioId() != null) {
             validarExistenciaUsuario(request.getUsuarioId());
         }
         if (request.getEquipoId() != null) {
             validarExistenciaEquipo(request.getEquipoId());
         }
+
         Sancion sancion = Sancion.builder()
                 .usuarioId(request.getUsuarioId())
                 .equipoId(request.getEquipoId())
@@ -61,17 +59,11 @@ public class SancionService {
                 .estado(Sancion.EstadoSancion.ACTIVA)
                 .build();
 
-        Sancion guardada = sancionRepository.save(sancion);
-        log.info("[sanction-service] Sanción creada. ID={}, severidad={}", guardada.getId(), guardada.getSeveridad());
-        return SancionDTO.Response.fromEntity(guardada);
+        return SancionDTO.Response.fromEntity(sancionRepository.save(sancion));
     }
 
     @Transactional(readOnly = true)
-    public List<SancionDTO.Response> listarSanciones(Long usuarioId, Long equipoId,
-                                                      Sancion.EstadoSancion estado) {
-        log.info("[sanction-service] Listando sanciones. usuarioId={}, equipoId={}, estado={}",
-                usuarioId, equipoId, estado);
-
+    public List<SancionDTO.Response> listarSanciones(Long usuarioId, Long equipoId, Sancion.EstadoSancion estado) {
         List<Sancion> sanciones;
         if (usuarioId != null && estado != null) {
             sanciones = sancionRepository.findByUsuarioIdAndEstado(usuarioId, estado);
@@ -86,63 +78,45 @@ public class SancionService {
         } else {
             sanciones = sancionRepository.findAll();
         }
-
         return sanciones.stream().map(SancionDTO.Response::fromEntity).toList();
     }
 
     @Transactional(readOnly = true)
     public SancionDTO.Response buscarPorId(Long id) {
-        log.info("[sanction-service] Buscando sanción ID={}", id);
         return SancionDTO.Response.fromEntity(obtenerSancion(id));
     }
 
     @Transactional(readOnly = true)
     public SancionDTO.VerificacionResponse verificarBloqueoUsuario(Long usuarioId) {
-        log.info("[sanction-service] Verificando bloqueo para usuarioId={}", usuarioId);
-
-        List<Sancion> bloqueantes = sancionRepository
-                .findSancionesBloqueantesUsuario(usuarioId, LocalDateTime.now());
-
+        List<Sancion> bloqueantes = sancionRepository.findSancionesBloqueantesUsuario(usuarioId, LocalDateTime.now());
         if (bloqueantes.isEmpty()) {
-            log.info("[sanction-service] Usuario ID={} sin sanciones bloqueantes", usuarioId);
             return SancionDTO.VerificacionResponse.noBloqueado(usuarioId, "USUARIO");
         }
-
         Sancion primera = bloqueantes.get(0);
-        log.warn("[sanction-service] Usuario ID={} BLOQUEADO. Motivo: {}", usuarioId, primera.getMotivo());
         return SancionDTO.VerificacionResponse.bloqueado(usuarioId, "USUARIO", primera.getMotivo());
     }
 
-
     @Transactional(readOnly = true)
     public SancionDTO.VerificacionResponse verificarBloqueoEquipo(Long equipoId) {
-        log.info("[sanction-service] Verificando bloqueo para equipoId={}", equipoId);
-
-        List<Sancion> bloqueantes = sancionRepository
-                .findSancionesBloqueantesEquipo(equipoId, LocalDateTime.now());
-
+        List<Sancion> bloqueantes = sancionRepository.findSancionesBloqueantesEquipo(equipoId, LocalDateTime.now());
         if (bloqueantes.isEmpty()) {
-            log.info("[sanction-service] Equipo ID={} sin sanciones bloqueantes", equipoId);
             return SancionDTO.VerificacionResponse.noBloqueado(equipoId, "EQUIPO");
         }
-
         Sancion primera = bloqueantes.get(0);
-        log.warn("[sanction-service] Equipo ID={} BLOQUEADO. Motivo: {}", equipoId, primera.getMotivo());
         return SancionDTO.VerificacionResponse.bloqueado(equipoId, "EQUIPO", primera.getMotivo());
     }
 
-
     public SancionDTO.Response actualizarSancion(Long id, SancionDTO.Request request) {
-        log.info("[sanction-service] Actualizando sanción ID={}", id);
-
         Sancion sancion = obtenerSancion(id);
 
         if (sancion.getEstado() == Sancion.EstadoSancion.CERRADA) {
-            throw new IllegalStateException("No se puede modificar una sanción CERRADA");
+            throw new SancionValidationException("No se puede modificar una sanción CERRADA");
         }
-
+        if (sancion.getEstado() == Sancion.EstadoSancion.ANULADA) {
+            throw new SancionValidationException("No se puede modificar una sanción que ha sido ANULADA");
+        }
         if (!request.getFechaFin().isAfter(request.getFechaInicio())) {
-            throw new IllegalArgumentException("La fecha de fin debe ser posterior a la fecha de inicio");
+            throw new SancionValidationException("La fecha de fin debe ser posterior a la fecha de inicio");
         }
 
         sancion.setMotivo(request.getMotivo());
@@ -150,65 +124,71 @@ public class SancionService {
         sancion.setFechaFin(request.getFechaFin());
         sancion.setSeveridad(request.getSeveridad());
 
-        Sancion actualizada = sancionRepository.save(sancion);
-        log.info("[sanction-service] Sanción actualizada. ID={}", id);
-        return SancionDTO.Response.fromEntity(actualizada);
+        return SancionDTO.Response.fromEntity(sancionRepository.save(sancion));
     }
 
     public SancionDTO.Response cerrarSancion(Long id, String justificacion) {
-        log.info("[sanction-service] Cerrando sanción ID={}", id);
-
         Sancion sancion = obtenerSancion(id);
 
         if (sancion.getEstado() == Sancion.EstadoSancion.CERRADA) {
-            throw new IllegalStateException("La sanción ya está CERRADA");
+            throw new SancionValidationException("La sanción ya está CERRADA");
+        }
+        if (sancion.getEstado() == Sancion.EstadoSancion.ANULADA) {
+            throw new SancionValidationException("No se puede cerrar una sanción que fue previamente ANULADA");
         }
 
         sancion.setEstado(Sancion.EstadoSancion.CERRADA);
-        Sancion cerrada = sancionRepository.save(sancion);
-
-        log.info("[sanction-service] Sanción cerrada. ID={}, motivo justif.: {}", id, justificacion);
-        return SancionDTO.Response.fromEntity(cerrada);
+        sancion.setMotivo(sancion.getMotivo() + " [Cierre Justificado]: " + justificacion);
+        return SancionDTO.Response.fromEntity(sancionRepository.save(sancion));
     }
 
     public int cerrarSancionesVencidas() {
         List<Sancion> vencidas = sancionRepository.findSancionesVencidas(LocalDateTime.now());
         vencidas.forEach(s -> s.setEstado(Sancion.EstadoSancion.CERRADA));
         sancionRepository.saveAll(vencidas);
-        log.info("[sanction-service] Sanciones vencidas cerradas automáticamente: {}", vencidas.size());
         return vencidas.size();
     }
 
+    public SancionDTO.Response anularSancionLogica(Long id, String justificacion) {
+        if (justificacion == null || justificacion.isBlank()) {
+            throw new SancionValidationException("La justificación de anulación es obligatoria.");
+        }
+        Sancion sancion = obtenerSancion(id);
+        if (sancion.getEstado() == Sancion.EstadoSancion.ANULADA) {
+            throw new SancionValidationException("La sanción ya se encuentra en estado ANULADA.");
+        }
+
+        sancion.setEstado(Sancion.EstadoSancion.ANULADA);
+        sancion.setMotivo("[ANULACIÓN LÓGICA via DELETE]: " + justificacion + " | Motivo original: " + sancion.getMotivo());
+
+        log.info("[sanction-service] Sanción ID={} ANULADA lógicamente.", id);
+        return SancionDTO.Response.fromEntity(sancionRepository.save(sancion));
+    }
 
     private Sancion obtenerSancion(Long id) {
         return sancionRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("[sanction-service] Sanción no encontrada ID={}", id);
-                    return new SancionNotFoundException(id);
-                });
+                .orElseThrow(() -> new SancionNotFoundException(id));
     }
 
     private void validarExistenciaUsuario(Long usuarioId) {
         try {
             userClient.obtenerResumenUsuario(usuarioId);
-            log.info("[sanction-service] Usuario ID={} validado", usuarioId);
         } catch (FeignException.NotFound e) {
-            throw new ServicioExternoException("user-service", "Usuario ID=" + usuarioId + " no encontrado");
+            throw new SancionValidationException("El usuario con ID " + usuarioId + " no existe en el sistema.");
         } catch (FeignException e) {
-            log.error("[sanction-service] Error al contactar user-service: {}", e.getMessage());
-            throw new ServicioExternoException("user-service", e.getMessage());
+            log.error("[sanction-service] Caída de red al contactar user-service: {}", e.getMessage());
+            throw new ServicioExternoException("user-service", "El microservicio de usuarios no responde. Intente más tarde.");
         }
     }
 
     private void validarExistenciaEquipo(Long equipoId) {
         try {
             teamClient.obtenerEquipo(equipoId);
-            log.info("[sanction-service] Equipo ID={} validado", equipoId);
         } catch (FeignException.NotFound e) {
-            throw new ServicioExternoException("team-service", "Equipo ID=" + equipoId + " no encontrado");
+            throw new SancionValidationException("El equipo con ID " + equipoId + " no existe en el sistema.");
         } catch (FeignException e) {
-            log.error("[sanction-service] Error al contactar team-service: {}", e.getMessage());
-            throw new ServicioExternoException("team-service", e.getMessage());
+            log.error("[sanction-service] Caída de red al contactar team-service: {}", e.getMessage());
+            throw new ServicioExternoException("team-service", "El microservicio de equipos no responde. Intente más tarde.");
         }
     }
 }

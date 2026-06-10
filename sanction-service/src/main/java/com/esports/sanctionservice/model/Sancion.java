@@ -64,18 +64,24 @@ public class Sancion {
     public boolean esBloqueante() {
         LocalDateTime ahora = LocalDateTime.now();
         return this.estado == EstadoSancion.ACTIVA
-            && this.severidad != SeveridadSancion.ADVERTENCIA
-            && ahora.isAfter(this.fechaInicio)
-            && ahora.isBefore(this.fechaFin);
+                && this.severidad != SeveridadSancion.ADVERTENCIA
+                && ahora.isAfter(this.fechaInicio)
+                && ahora.isBefore(this.fechaFin);
     }
 
     public boolean estaVigente() {
         LocalDateTime ahora = LocalDateTime.now();
+        if (this.estado == EstadoSancion.ANULADA) {
+            return false;
+        }
         return ahora.isAfter(this.fechaInicio) && ahora.isBefore(this.fechaFin);
     }
 
     public enum EstadoSancion {
-        ACTIVA, CERRADA, APELADA
+        ACTIVA,
+        CERRADA,
+        APELADA,
+        ANULADA //nosfaltaba
     }
 
     public enum SeveridadSancion {
