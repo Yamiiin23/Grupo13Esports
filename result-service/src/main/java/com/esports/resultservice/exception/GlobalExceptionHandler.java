@@ -19,36 +19,23 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(ResultadoNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleNotFound(ResultadoNotFoundException ex) {
-        log.warn("[result-service] {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(buildError(HttpStatus.NOT_FOUND, ex.getMessage()));
-    }
-
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, Object>> handleBusinessRule(IllegalStateException ex) {
-        log.warn("[result-service] Regla de negocio: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage()));
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArg(IllegalArgumentException ex) {
-        log.warn("[result-service] Argumento inválido: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(buildError(HttpStatus.BAD_REQUEST, ex.getMessage()));
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<Map<String, Object>> handleBusinessException(BusinessException ex) {
+        log.warn("[result-service] Error de dominio controlado: {} - Estado: {}", ex.getMessage(), ex.getStatus());
+        return ResponseEntity.status(ex.getStatus())
+                .body(buildError(ex.getStatus(), ex.getMessage()));
     }
 
     @ExceptionHandler(FeignException.class)
     public ResponseEntity<Map<String, Object>> handleFeign(FeignException ex) {
-        log.error("[result-service] Error Feign status={}: {}", ex.status(), ex.getMessage());
+        log.error("[result-service] Error crítico de comunicación Feign status={}: {}", ex.status(), ex.getMessage());
+
         if (ex.status() == 404) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(buildError(HttpStatus.NOT_FOUND, "Recurso externo no encontrado"));
+                    .body(buildError(HttpStatus.NOT_FOUND, "El recurso solicitado no existe en el microservicio remoto (match-service)."));
         }
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(buildError(HttpStatus.SERVICE_UNAVAILABLE, "Servicio externo no disponible"));
+                .body(buildError(HttpStatus.SERVICE_UNAVAILABLE, "Fallo de comunicación: El servicio remoto de partidas no se encuentra disponible."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -56,7 +43,9 @@ public class GlobalExceptionHandler {
         Map<String, String> errores = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(e ->
                 errores.put(((FieldError) e).getField(), e.getDefaultMessage()));
-        log.warn("[result-service] Validación fallida: {}", errores);
+
+        log.warn("[result-service] Validación de DTO fallida: {}", errores);
+
         Map<String, Object> body = buildError(HttpStatus.BAD_REQUEST, "Datos de entrada inválidos");
         body.put("errores", errores);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
@@ -64,9 +53,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
-        log.error("[result-service] Error interno: {}", ex.getMessage(), ex);
+        log.error("[result-service] Error interno no controlado (500): {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(buildError(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor"));
+                .body(buildError(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor. Por favor, contacte al administrador."));
     }
 
     private Map<String, Object> buildError(HttpStatus status, String mensaje) {
