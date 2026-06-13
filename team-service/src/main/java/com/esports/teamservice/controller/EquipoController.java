@@ -3,7 +3,7 @@ package com.esports.teamservice.controller;
 import com.esports.teamservice.dto.EquipoDTO;
 import com.esports.teamservice.model.Equipo;
 import com.esports.teamservice.service.EquipoService;
-import io.swagger.v3.oas.annotations.Operation; // <-- NUEVAS IMPORTACIONES DE SWAGGER
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -122,7 +122,7 @@ public class EquipoController {
     }
 
     @DeleteMapping("/{id}/miembros/{usuarioId}")
-    @Operation(summary = "Remover un jugador de la plantilla", description = "Elimina la asociación formal de membresía de un jugador respecto a la escuadra especificada.")
+    @Operation(summary = "Remover un jugador de la plantilla", description = "Elimina la asociación formal de membresía de un jugador respecto a la escuadra específica.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Jugador removido y liberado del equipo de manera correcta"),
             @ApiResponse(responseCode = "404", description = "No se localizó la escuadra o el usuario no formaba parte de las filas del equipo")

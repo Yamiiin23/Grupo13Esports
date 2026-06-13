@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Pruebas Unitarias del Módulo EquipoService - Estructura AAA")
 class EquipoServiceTest {
 
     @Mock private EquipoRepository       equipoRepository;
@@ -69,14 +70,17 @@ class EquipoServiceTest {
     @Test
     @DisplayName("Debe crear equipo cuando todos los datos son válidos")
     void crearEquipo_exitoso() {
+        // --- 1. GIVEN (Arrange - Configuración) ---
         when(equipoRepository.existsByNombreIgnoreCase("Team Phantom")).thenReturn(false);
         when(userClient.obtenerResumenUsuario(10L)).thenReturn(usuarioActivo);
         when(gameClient.obtenerJuego(5L)).thenReturn(juegoActivo);
         when(equipoRepository.save(any(Equipo.class))).thenReturn(equipoBase);
         when(miembroRepository.save(any(MiembroEquipo.class))).thenAnswer(inv -> inv.getArgument(0));
 
+        // --- 2. WHEN (Act - Ejecución) ---
         EquipoDTO.Response result = equipoService.crearEquipo(requestValido);
 
+        // --- 3. THEN (Assert - Verificación) ---
         assertThat(result).isNotNull();
         assertThat(result.getNombre()).isEqualTo("Team Phantom");
         assertThat(result.getEstado()).isEqualTo("ACTIVO");
@@ -90,11 +94,12 @@ class EquipoServiceTest {
     @Test
     @DisplayName("Debe lanzar excepción si el capitán no puede competir")
     void crearEquipo_capitanSancionado_lanzaExcepcion() {
+        // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.existsByNombreIgnoreCase("Team Phantom")).thenReturn(false);
-
         ClientDTO.UsuarioResumen sancionado = new ClientDTO.UsuarioResumen(10L, "SancionadoGG", "JUGADOR", "SANCIONADO", false);
         when(userClient.obtenerResumenUsuario(10L)).thenReturn(sancionado);
 
+        // --- 2. WHEN & 3. THEN (Act & Assert combinados para excepciones) ---
         assertThatThrownBy(() -> equipoService.crearEquipo(requestValido))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no puede competir");
@@ -105,12 +110,13 @@ class EquipoServiceTest {
     @Test
     @DisplayName("Debe lanzar excepción si el juego está INACTIVO")
     void crearEquipo_juegoInactivo_lanzaExcepcion() {
+        // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.existsByNombreIgnoreCase("Team Phantom")).thenReturn(false);
         when(userClient.obtenerResumenUsuario(10L)).thenReturn(usuarioActivo);
-
         ClientDTO.JuegoResumen inactivo = new ClientDTO.JuegoResumen(5L, "Juego Viejo", "1v1", 1, "INACTIVO");
         when(gameClient.obtenerJuego(5L)).thenReturn(inactivo);
 
+        // --- 2. WHEN & 3. THEN (Act & Assert combinados) ---
         assertThatThrownBy(() -> equipoService.crearEquipo(requestValido))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no está activo");
@@ -121,10 +127,13 @@ class EquipoServiceTest {
     @Test
     @DisplayName("Debe retornar equipo existente por ID")
     void buscarPorId_exitoso() {
+        // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.findById(1L)).thenReturn(Optional.of(equipoBase));
 
+        // --- 2. WHEN (Act) ---
         EquipoDTO.Response result = equipoService.buscarPorId(1L);
 
+        // --- 3. THEN (Assert) ---
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getNombre()).isEqualTo("Team Phantom");
     }
@@ -132,8 +141,10 @@ class EquipoServiceTest {
     @Test
     @DisplayName("Debe lanzar excepción cuando el equipo no existe")
     void buscarPorId_noExiste_lanzaExcepcion() {
+        // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.findById(99L)).thenReturn(Optional.empty());
 
+        // --- 2. WHEN & 3. THEN (Act & Assert combinados) ---
         assertThatThrownBy(() -> equipoService.buscarPorId(99L))
                 .isInstanceOf(EquipoNotFoundException.class)
                 .hasMessageContaining("99");
@@ -142,8 +153,8 @@ class EquipoServiceTest {
     @Test
     @DisplayName("Debe agregar miembro cuando el usuario puede competir y no está duplicado")
     void agregarMiembro_exitoso() {
+        // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.findById(1L)).thenReturn(Optional.of(equipoBase));
-
         ClientDTO.UsuarioResumen nuevoJugador = new ClientDTO.UsuarioResumen(20L, "NuevoGG", "JUGADOR", "ACTIVO", true);
         when(userClient.obtenerResumenUsuario(20L)).thenReturn(nuevoJugador);
         when(miembroRepository.existsByEquipoIdAndUsuarioId(1L, 20L)).thenReturn(false);
@@ -152,8 +163,10 @@ class EquipoServiceTest {
         EquipoDTO.MiembroRequest miembroRequest = EquipoDTO.MiembroRequest.builder()
                 .usuarioId(20L).rolDentroEquipo(MiembroEquipo.RolEnEquipo.JUGADOR).build();
 
+        // --- 2. WHEN (Act) ---
         EquipoDTO.Response result = equipoService.agregarMiembro(1L, miembroRequest);
 
+        // --- 3. THEN (Assert) ---
         assertThat(result).isNotNull();
         verify(miembroRepository).save(any(MiembroEquipo.class));
     }
@@ -161,6 +174,7 @@ class EquipoServiceTest {
     @Test
     @DisplayName("Debe lanzar excepción si el miembro ya está en el equipo")
     void agregarMiembro_duplicado_lanzaExcepcion() {
+        // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.findById(1L)).thenReturn(Optional.of(equipoBase));
         when(userClient.obtenerResumenUsuario(10L)).thenReturn(usuarioActivo);
         when(miembroRepository.existsByEquipoIdAndUsuarioId(1L, 10L)).thenReturn(true);
@@ -168,6 +182,7 @@ class EquipoServiceTest {
         EquipoDTO.MiembroRequest miembroRequest = EquipoDTO.MiembroRequest.builder()
                 .usuarioId(10L).build();
 
+        // --- 2. WHEN & 3. THEN (Act & Assert combinados) ---
         assertThatThrownBy(() -> equipoService.agregarMiembro(1L, miembroRequest))
                 .isInstanceOf(MiembroDuplicadoException.class);
 
@@ -177,11 +192,14 @@ class EquipoServiceTest {
     @Test
     @DisplayName("Debe desactivar equipo correctamente")
     void desactivarEquipo_exitoso() {
+        // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.findById(1L)).thenReturn(Optional.of(equipoBase));
         when(equipoRepository.save(any(Equipo.class))).thenAnswer(inv -> inv.getArgument(0));
 
+        // --- 2. WHEN (Act) ---
         EquipoDTO.Response result = equipoService.desactivarEquipo(1L);
 
+        // --- 3. THEN (Assert) ---
         assertThat(result.getEstado()).isEqualTo("INACTIVO");
         assertThat(result.isPuedeInscribirse()).isFalse();
     }

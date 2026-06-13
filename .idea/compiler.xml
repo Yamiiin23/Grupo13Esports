@@ -13,7 +13,6 @@
         <module name="auth-service" />
         <module name="tournament-service" />
         <module name="match-service" />
-        <module name="user-service" />
         <module name="game-service" />
       </profile>
       <profile name="Maven default annotation processors profile" enabled="true">
@@ -22,6 +21,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="sanction-service" />
         <module name="result-service" />
+        <module name="user-service" />
         <module name="team-service" />
         <module name="ranking-service" />
       </profile>
