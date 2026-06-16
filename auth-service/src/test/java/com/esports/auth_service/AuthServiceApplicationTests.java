@@ -61,7 +61,7 @@ class AuthServiceTest {
 		UsuarioAuth usuarioExistente = UsuarioAuth.builder()
 				.id(10L)
 				.email("admin@esports.com")
-				.password(passwordEncriptadaBCrypt) // Contraseña encriptada real en BD simulada
+				.password(passwordEncriptadaBCrypt)
 				.rol("ADMIN")
 				.userRefId(99L)
 				.build();

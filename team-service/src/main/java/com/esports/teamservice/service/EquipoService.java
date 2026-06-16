@@ -23,10 +23,10 @@ public class EquipoService {
 
     private static final Logger log = LoggerFactory.getLogger(EquipoService.class);
 
-    private final EquipoRepository       equipoRepository;
+    private final EquipoRepository equipoRepository;
     private final MiembroEquipoRepository miembroRepository;
-    private final UserServiceClient       userClient;
-    private final GameServiceClient       gameClient;
+    private final UserServiceClient userClient;
+    private final GameServiceClient gameClient;
 
     public EquipoService(EquipoRepository equipoRepository,
                          MiembroEquipoRepository miembroRepository,
@@ -39,16 +39,13 @@ public class EquipoService {
     }
 
     public EquipoDTO.Response crearEquipo(EquipoDTO.Request request) {
-        log.info("[team-service] Creando equipo: nombre={}, capitanId={}, juegoId={}",
-                request.getNombre(), request.getCapitanId(), request.getJuegoPrincipalId());
+        log.info("Creando equipo nuevo: {}", request.getNombre());
 
         if (equipoRepository.existsByNombreIgnoreCase(request.getNombre())) {
-            log.warn("[team-service] Nombre de equipo duplicado: {}", request.getNombre());
             throw new EquipoYaExisteException(request.getNombre());
         }
 
         validarUsuarioPuedeCompetar(request.getCapitanId(), "Capitán");
-
         validarJuegoActivo(request.getJuegoPrincipalId());
 
         Equipo equipo = Equipo.builder()
@@ -65,18 +62,15 @@ public class EquipoService {
                 .usuarioId(request.getCapitanId())
                 .rolDentroEquipo(MiembroEquipo.RolEnEquipo.CAPITAN)
                 .build();
+
         miembroRepository.save(miembroCapitan);
         guardado.getMiembros().add(miembroCapitan);
 
-        log.info("[team-service] Equipo creado. ID={}, nombre={}", guardado.getId(), guardado.getNombre());
         return EquipoDTO.Response.fromEntity(guardado);
     }
 
-
     @Transactional(readOnly = true)
     public List<EquipoDTO.Response> listarEquipos(Long juegoId, Equipo.EstadoEquipo estado) {
-        log.info("[team-service] Listando equipos. juegoId={}, estado={}", juegoId, estado);
-
         List<Equipo> equipos;
         if (juegoId != null && estado != null) {
             equipos = equipoRepository.findByJuegoPrincipalIdAndEstado(juegoId, estado);
@@ -87,24 +81,17 @@ public class EquipoService {
         } else {
             equipos = equipoRepository.findAll();
         }
-
         return equipos.stream().map(EquipoDTO.Response::fromEntity).toList();
     }
 
     @Transactional(readOnly = true)
     public EquipoDTO.Response buscarPorId(Long id) {
-        log.info("[team-service] Buscando equipo ID={}", id);
         Equipo equipo = equipoRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("[team-service] Equipo no encontrado. ID={}", id);
-                    return new EquipoNotFoundException(id);
-                });
+                .orElseThrow(() -> new EquipoNotFoundException(id));
         return EquipoDTO.Response.fromEntity(equipo);
     }
 
     public EquipoDTO.Response actualizarEquipo(Long id, EquipoDTO.Request request) {
-        log.info("[team-service] Actualizando equipo ID={}", id);
-
         Equipo equipo = equipoRepository.findById(id)
                 .orElseThrow(() -> new EquipoNotFoundException(id));
 
@@ -125,20 +112,15 @@ public class EquipoService {
         equipo.setCapitanId(request.getCapitanId());
         equipo.setJuegoPrincipalId(request.getJuegoPrincipalId());
 
-        Equipo actualizado = equipoRepository.save(equipo);
-        log.info("[team-service] Equipo actualizado. ID={}", actualizado.getId());
-        return EquipoDTO.Response.fromEntity(actualizado);
+        return EquipoDTO.Response.fromEntity(equipoRepository.save(equipo));
     }
 
     public EquipoDTO.Response agregarMiembro(Long equipoId, EquipoDTO.MiembroRequest request) {
-        log.info("[team-service] Agregando miembro usuarioId={} al equipo ID={}", request.getUsuarioId(), equipoId);
-
         Equipo equipo = equipoRepository.findById(equipoId)
                 .orElseThrow(() -> new EquipoNotFoundException(equipoId));
 
         if (!equipo.getEstado().puedeInscribirse()) {
-            log.warn("[team-service] No se puede agregar miembro a equipo INACTIVO. ID={}", equipoId);
-            throw new IllegalStateException("No se pueden agregar miembros a un equipo INACTIVO");
+            throw new IllegalStateException("No se permiten agregar miembros si el equipo esta INACTIVO");
         }
 
         validarUsuarioPuedeCompetar(request.getUsuarioId(), "Jugador");
@@ -160,59 +142,46 @@ public class EquipoService {
         miembroRepository.save(miembro);
         equipo.getMiembros().add(miembro);
 
-        log.info("[team-service] Miembro agregado. usuarioId={}, equipoId={}, rol={}", request.getUsuarioId(), equipoId, rol);
         return EquipoDTO.Response.fromEntity(equipo);
     }
 
     public EquipoDTO.Response eliminarMiembro(Long equipoId, Long usuarioId) {
-        log.info("[team-service] Eliminando miembro usuarioId={} del equipo ID={}", usuarioId, equipoId);
-
         Equipo equipo = equipoRepository.findById(equipoId)
                 .orElseThrow(() -> new EquipoNotFoundException(equipoId));
 
         if (equipo.getCapitanId().equals(usuarioId)) {
-            throw new IllegalStateException("No se puede eliminar al capitán del equipo. Cambia el capitán primero.");
+            throw new IllegalStateException("No se puede eliminar al capitan. Cambie la capitania primero.");
         }
 
         MiembroEquipo miembro = equipo.getMiembros().stream()
                 .filter(m -> m.getUsuarioId().equals(usuarioId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("El usuario ID=" + usuarioId + " no es miembro del equipo"));
+                .orElseThrow(() -> new IllegalStateException("El usuario no pertenece a este equipo"));
 
         equipo.getMiembros().remove(miembro);
         miembroRepository.delete(miembro);
 
-        log.info("[team-service] Miembro eliminado. usuarioId={}, equipoId={}", usuarioId, equipoId);
         return EquipoDTO.Response.fromEntity(equipo);
     }
 
     public EquipoDTO.Response desactivarEquipo(Long id) {
-        log.info("[team-service] Desactivando equipo ID={}", id);
-
         Equipo equipo = equipoRepository.findById(id)
                 .orElseThrow(() -> new EquipoNotFoundException(id));
 
         equipo.setEstado(Equipo.EstadoEquipo.INACTIVO);
-        Equipo desactivado = equipoRepository.save(equipo);
-
-        log.info("[team-service] Equipo desactivado. ID={}, nombre={}", desactivado.getId(), desactivado.getNombre());
-        return EquipoDTO.Response.fromEntity(desactivado);
+        return EquipoDTO.Response.fromEntity(equipoRepository.save(equipo));
     }
 
     private void validarUsuarioPuedeCompetar(Long usuarioId, String rol) {
         try {
             ClientDTO.UsuarioResumen usuario = userClient.obtenerResumenUsuario(usuarioId);
             if (!usuario.isPuedeCompetar()) {
-                log.warn("[team-service] {} ID={} no puede competir. Estado={}", rol, usuarioId, usuario.getEstado());
-                throw new IllegalStateException(rol + " con ID=" + usuarioId
-                        + " no puede competir (estado: " + usuario.getEstado() + ")");
+                throw new IllegalStateException(rol + " seleccionado no esta disponible para competir");
             }
-            log.info("[team-service] {} ID={} validado correctamente (nickname={})", rol, usuarioId, usuario.getNickname());
         } catch (FeignException.NotFound e) {
-            throw new ServicioExternoException("user-service", "Usuario ID=" + usuarioId + " no encontrado");
+            throw new ServicioExternoException("user-service", "Usuario con ID " + usuarioId + " no existe");
         } catch (FeignException e) {
-            log.error("[team-service] Error al contactar user-service para usuarioId={}: {}", usuarioId, e.getMessage());
-            throw new ServicioExternoException("user-service", e.getMessage());
+            throw new ServicioExternoException("user-service", "Error de comunicacion con el servicio de usuarios");
         }
     }
 
@@ -220,15 +189,12 @@ public class EquipoService {
         try {
             ClientDTO.JuegoResumen juego = gameClient.obtenerJuego(juegoId);
             if (!"ACTIVO".equals(juego.getEstado())) {
-                log.warn("[team-service] Juego ID={} no está ACTIVO. Estado={}", juegoId, juego.getEstado());
-                throw new IllegalStateException("El juego '" + juego.getNombre() + "' no está activo para nuevos equipos");
+                throw new IllegalStateException("El juego seleccionado no esta activo");
             }
-            log.info("[team-service] Juego ID={} validado correctamente (nombre={})", juegoId, juego.getNombre());
         } catch (FeignException.NotFound e) {
-            throw new ServicioExternoException("game-service", "Juego ID=" + juegoId + " no encontrado");
+            throw new ServicioExternoException("game-service", "Juego con ID " + juegoId + " no existe");
         } catch (FeignException e) {
-            log.error("[team-service] Error al contactar game-service para juegoId={}: {}", juegoId, e.getMessage());
-            throw new ServicioExternoException("game-service", e.getMessage());
+            throw new ServicioExternoException("game-service", "Error de comunicacion con el servicio de juegos");
         }
     }
 }

@@ -5,8 +5,6 @@ import com.esports.teamservice.model.Equipo;
 import com.esports.teamservice.service.EquipoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,7 +19,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/equipos")
-@Tag(name = "Módulo Equipos", description = "Controlador interactivo para la gestión integral y el control de plantillas de escuadras de eSports")
+@Tag(name = "Equipos", description = "Endpoints para la gestion de equipos y miembros")
 public class EquipoController {
 
     private static final Logger log = LoggerFactory.getLogger(EquipoController.class);
@@ -32,106 +30,62 @@ public class EquipoController {
     }
 
     @PostMapping
-    @Operation(summary = "Registrar una nueva escuadra", description = "Crea un equipo en la base de datos local previa validación del juego y del capitán mediante OpenFeign hacia los microservicios externos correspondientes.")
+    @Operation(summary = "Crear un equipo", description = "Crea un equipo validando externamente al capitan y al juego principal")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Escuadra dada de alta exitosamente",
-                    content = @Content(schema = @Schema(implementation = EquipoDTO.Response.class))),
-            @ApiResponse(responseCode = "400", description = "Petición incorrecta (Fallo en la validación gramatical o campos del Request)"),
-            @ApiResponse(responseCode = "422", description = "Error de negocio (El capitán o el juego principal provistos no existen en el ecosistema)")
+            @ApiResponse(responseCode = "201", description = "Equipo creado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada invalidos"),
+            @ApiResponse(responseCode = "422", description = "Error en las validaciones de negocio")
     })
-    public ResponseEntity<EquipoDTO.Response> crearEquipo(
-            @Valid @RequestBody EquipoDTO.Request request) {
-
-        log.info("[team-service] POST /api/v1/equipos - nombre={}", request.getNombre());
-        EquipoDTO.Response response = equipoService.crearEquipo(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<EquipoDTO.Response> crearEquipo(@Valid @RequestBody EquipoDTO.Request request) {
+        log.info("REST request para crear equipo: {}", request.getNombre());
+        return ResponseEntity.status(HttpStatus.CREATED).body(equipoService.crearEquipo(request));
     }
 
     @GetMapping
-    @Operation(summary = "Listar y filtrar escuadras", description = "Recupera una colección de todos los equipos del sistema, permitiendo aplicar filtros condicionales opcionales por juego y por estado de disponibilidad.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Listado de equipos recuperado con éxito")
-    })
+    @Operation(summary = "Listar equipos", description = "Retorna los equipos registrados permitiendo filtrar opcionalmente por juego y estado")
     public ResponseEntity<List<EquipoDTO.Response>> listarEquipos(
-            @Parameter(description = "ID del videojuego para filtrar las escuadras asociadas", example = "2")
             @RequestParam(required = false) Long juegoId,
-            @Parameter(description = "Estado operacional para restringir la consulta (ACTIVO, INACTIVO)", example = "ACTIVO")
             @RequestParam(required = false) Equipo.EstadoEquipo estado) {
-
-        log.info("[team-service] GET /api/v1/equipos - juegoId={}, estado={}", juegoId, estado);
+        log.info("REST request para listar equipos con filtros");
         return ResponseEntity.ok(equipoService.listarEquipos(juegoId, estado));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Buscar un equipo por su ID", description = "Recupera los datos operativos estructurados y la nómina de jugadores de una escuadra mediante su clave primaria única.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Equipo localizado correctamente",
-                    content = @Content(schema = @Schema(implementation = EquipoDTO.Response.class))),
-            @ApiResponse(responseCode = "404", description = "El identificador provisto no corresponde a ninguna escuadra registrada")
-    })
-    public ResponseEntity<EquipoDTO.Response> buscarPorId(
-            @Parameter(description = "ID único incremental de la escuadra", example = "1", required = true)
-            @PathVariable Long id) {
-        log.info("[team-service] GET /api/v1/equipos/{}", id);
+    @Operation(summary = "Obtener equipo por ID")
+    public ResponseEntity<EquipoDTO.Response> buscarPorId(@PathVariable Long id) {
+        log.info("REST request para obtener equipo: {}", id);
         return ResponseEntity.ok(equipoService.buscarPorId(id));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar datos de una escuadra", description = "Modifica las propiedades editables (nombre, capitán, juego principal) de una escuadra basándose en su ID y un payload válido.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Escuadra modificada exitosamente",
-                    content = @Content(schema = @Schema(implementation = EquipoDTO.Response.class))),
-            @ApiResponse(responseCode = "400", description = "Errores de validación en el cuerpo de la solicitud"),
-            @ApiResponse(responseCode = "404", description = "No se encontró el equipo para actualizar")
-    })
+    @Operation(summary = "Actualizar datos de un equipo")
     public ResponseEntity<EquipoDTO.Response> actualizarEquipo(
-            @Parameter(description = "ID de la escuadra a modificar", example = "1", required = true) @PathVariable Long id,
+            @PathVariable Long id,
             @Valid @RequestBody EquipoDTO.Request request) {
-
-        log.info("[team-service] PUT /api/v1/equipos/{}", id);
+        log.info("REST request para actualizar equipo ID: {}", id);
         return ResponseEntity.ok(equipoService.actualizarEquipo(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Desactivar un equipo (Soft Delete)", description = "Cambia de manera lógica el estado operativo del equipo a 'INACTIVO' para darlo de baja temporal o definitiva sin destruir el registro físico.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Equipo dado de baja en el sistema de forma lógica"),
-            @ApiResponse(responseCode = "404", description = "El ID enviado no pertenece a ningún equipo operativo")
-    })
-    public ResponseEntity<EquipoDTO.Response> desactivarEquipo(
-            @Parameter(description = "ID de la escuadra a dar de baja", example = "1", required = true)
-            @PathVariable Long id) {
-        log.info("[team-service] DELETE /api/v1/equipos/{}", id);
+    @Operation(summary = "Desactivar un equipo (Baja logica)")
+    public ResponseEntity<EquipoDTO.Response> desactivarEquipo(@PathVariable Long id) {
+        log.info("REST request para desactivar equipo ID: {}", id);
         return ResponseEntity.ok(equipoService.desactivarEquipo(id));
     }
 
     @PostMapping("/{id}/miembros")
-    @Operation(summary = "Fichar/Agregar un jugador al equipo", description = "Incorpora un nuevo competidor a las filas de la escuadra con un rol específico, validando el cupo del equipo y la existencia real del usuario.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Jugador fichado e inscrito en la nómina con éxito",
-                    content = @Content(schema = @Schema(implementation = EquipoDTO.Response.class))),
-            @ApiResponse(responseCode = "400", description = "Formato de datos erróneo o infracción de restricciones de validación"),
-            @ApiResponse(responseCode = "404", description = "El equipo de destino o el ID del usuario provisto no existen")
-    })
+    @Operation(summary = "Agregar un miembro al equipo")
     public ResponseEntity<EquipoDTO.Response> agregarMiembro(
-            @Parameter(description = "ID de la escuadra que recibe al jugador", example = "1", required = true) @PathVariable Long id,
+            @PathVariable Long id,
             @Valid @RequestBody EquipoDTO.MiembroRequest request) {
-
-        log.info("[team-service] POST /api/v1/equipos/{}/miembros - usuarioId={}", id, request.getUsuarioId());
+        log.info("REST request para agregar miembro al equipo ID: {}", id);
         return ResponseEntity.status(HttpStatus.CREATED).body(equipoService.agregarMiembro(id, request));
     }
 
     @DeleteMapping("/{id}/miembros/{usuarioId}")
-    @Operation(summary = "Remover un jugador de la plantilla", description = "Elimina la asociación formal de membresía de un jugador respecto a la escuadra específica.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Jugador removido y liberado del equipo de manera correcta"),
-            @ApiResponse(responseCode = "404", description = "No se localizó la escuadra o el usuario no formaba parte de las filas del equipo")
-    })
-    public ResponseEntity<EquipoDTO.Response> eliminarMiembro(
-            @Parameter(description = "ID del equipo del cual saldrá el jugador", example = "1", required = true) @PathVariable Long id,
-            @Parameter(description = "ID del usuario que será revocado de la escuadra", example = "42", required = true) @PathVariable Long usuarioId) {
-
-        log.info("[team-service] DELETE /api/v1/equipos/{}/miembros/{}", id, usuarioId);
+    @Operation(summary = "Eliminar un miembro del equipo")
+    public ResponseEntity<EquipoDTO.Response> eliminarMiembro(@PathVariable Long id, @PathVariable Long usuarioId) {
+        log.info("REST request para eliminar miembro {} del equipo {}", usuarioId, id);
         return ResponseEntity.ok(equipoService.eliminarMiembro(id, usuarioId));
     }
 }
