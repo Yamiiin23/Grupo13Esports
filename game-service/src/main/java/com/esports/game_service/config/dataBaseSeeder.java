@@ -12,12 +12,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class DataBaseSeeder implements CommandLineRunner {
+public class dataBaseSeeder implements CommandLineRunner {
 
-    private static final Logger log = LoggerFactory.getLogger(DataBaseSeeder.class);
+    private static final Logger log = LoggerFactory.getLogger(dataBaseSeeder.class);
     private final JuegoRepository juegoRepository;
 
-    public DataBaseSeeder(JuegoRepository juegoRepository) {
+    public dataBaseSeeder(JuegoRepository juegoRepository) {
         this.juegoRepository = juegoRepository;
     }
 
