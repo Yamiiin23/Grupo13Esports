@@ -11,6 +11,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -38,7 +41,7 @@ class InscripcionServiceTest {
 				.estado(Inscripcion.EstadoInscripcion.PENDIENTE)
 				.build();
 
-		when(inscripcionRepository.existsByTorneoIdAndEquipoId(10L, 5L)).thenReturn(false);
+		when(inscripcionRepository.findByTorneoId(10L)).thenReturn(Collections.emptyList());
 		when(inscripcionRepository.save(any(Inscripcion.class))).thenReturn(inscripcionGuardada);
 
 		InscripcionDTO.Response resultado = inscripcionService.registrarEquipo(request);
@@ -46,6 +49,7 @@ class InscripcionServiceTest {
 		assertNotNull(resultado);
 		assertEquals(1L, resultado.getId());
 		assertEquals("PENDIENTE", resultado.getEstado());
+		assertNull(resultado.getMotivoCancelacion()); // Verifica el nuevo campo en estado inicial
 		verify(inscripcionRepository, times(1)).save(any(Inscripcion.class));
 	}
 
@@ -55,8 +59,15 @@ class InscripcionServiceTest {
 				.torneoId(10L)
 				.equipoId(5L)
 				.build();
-		when(inscripcionRepository.existsByTorneoIdAndEquipoId(10L, 5L)).thenReturn(true);
 
+		Inscripcion inscripcionExistente = Inscripcion.builder()
+				.id(2L)
+				.torneoId(10L)
+				.equipoId(5L)
+				.estado(Inscripcion.EstadoInscripcion.PENDIENTE)
+				.build();
+
+		when(inscripcionRepository.findByTorneoId(10L)).thenReturn(List.of(inscripcionExistente));
 
 		assertThrows(InscripcionDuplicadaException.class, () -> {
 			inscripcionService.registrarEquipo(request);
