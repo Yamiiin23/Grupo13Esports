@@ -1,5 +1,6 @@
 package com.esports.teamservice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore; // 1. SE AGREGÓ ESTE IMPORT
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,10 +11,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-    name = "miembros_equipo",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"equipo_id", "usuario_id"})
-    }
+        name = "miembros_equipo",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"equipo_id", "usuario_id"})
+        }
 )
 @Data
 @Builder
@@ -25,6 +26,7 @@ public class MiembroEquipo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore // 2. SE AGREGÓ ESTA ANOTACIÓN PARA CORTAR EL BUCLE JSON
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "equipo_id", nullable = false)
     private Equipo equipo;
