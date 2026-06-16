@@ -36,6 +36,14 @@ public class Ranking {
     @Builder.Default
     private Integer posicion = 0;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private EstadoRanking estado = EstadoRanking.ACTIVO;
+
+    @Column(length = 300)
+    private String motivoBaja;
+
     public void registrarVictoria(int puntosGanados, int difRondas) {
         this.puntos += puntosGanados;
         this.victorias += 1;
@@ -45,5 +53,10 @@ public class Ranking {
     public void registrarDerrota(int difRondas) {
         this.derrotas += 1;
         this.diferencia -= difRondas;
+    }
+
+    public enum EstadoRanking {
+        ACTIVO,
+        ANULADO
     }
 }
