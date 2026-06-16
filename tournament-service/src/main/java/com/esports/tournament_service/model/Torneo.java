@@ -41,10 +41,11 @@ public class Torneo {
     @PrePersist
     public void prePersist() {
         this.fechaCreacion = LocalDateTime.now();
-        if (this.estado == null) this.estado == EstadoTorneo.INSCRIPCION;
-        if this.participantesActuales == null) this.participantesActuales = 0;
+        if (this.estado == null) this.estado = EstadoTorneo.INSCRIPCION;
+        if (this.participantesActuales == null) this.participantesActuales = 0;
         if (this.maxParticipantes == null) this.maxParticipantes = 16;
     }
+
     public enum EstadoTorneo {
         INSCRIPCION,
         EN_CURSO,
