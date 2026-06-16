@@ -1,17 +1,18 @@
 package com.esports.auth_service.service;
-
-
 import com.esports.auth_service.dto.AuthDTO;
 import com.esports.auth_service.exception.AuthException;
 import com.esports.auth_service.model.UsuarioAuth;
 import com.esports.auth_service.repository.AuthRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -19,9 +20,11 @@ public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private final AuthRepository authRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     public AuthService(AuthRepository authRepository) {
         this.authRepository = authRepository;
+        this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
     public AuthDTO.TokenResponse registrar(AuthDTO.RegisterRequest request) {
@@ -32,7 +35,7 @@ public class AuthService {
             throw new AuthException("El email ya se encuentra registrado en el sistema.");
         }
 
-        String passwordEncriptada = Base64.getEncoder().encodeToString(request.getPassword().getBytes());
+        String passwordEncriptada = passwordEncoder.encode(request.getPassword());
 
         UsuarioAuth nuevoUsuario = UsuarioAuth.builder()
                 .email(request.getEmail())
@@ -51,12 +54,9 @@ public class AuthService {
     public AuthDTO.TokenResponse login(AuthDTO.LoginRequest request) {
         log.info("[auth-service] Intento de login iniciado para: {}", request.getEmail());
 
-        UsuarioAuth usuario = authRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AuthException("Credenciales incorrectas: Usuario no encontrado."));
+        UsuarioAuth usuario = authRepository.findByEmail(request.getEmail()).orElseThrow(() -> new AuthException("Credenciales incorrectas: Usuario no encontrado."));
 
-        String passwordEntranteEncriptada = Base64.getEncoder().encodeToString(request.getPassword().getBytes());
-
-        if (!usuario.getPassword().equals(passwordEntranteEncriptada)) {
+        if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
             log.warn("[auth-service] Contraseña inválida para el usuario: {}", request.getEmail());
             throw new AuthException("Credenciales incorrectas: Contraseña no coincide.");
         }
@@ -65,10 +65,40 @@ public class AuthService {
         return generarTokenResponse(usuario);
     }
 
+    @Transactional(readOnly = true)
+    public List<AuthDTO.TokenResponse> listarCuentas() {
+        log.info("[auth-service] Solicitando listado de todas las cuentas de acceso");
+        return authRepository.findAll().stream()
+                .map(this::generarTokenResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public AuthDTO.TokenResponse buscarPorId(Long id) {
+        log.info("[auth-service] Buscando cuenta de acceso con ID: {}", id);
+        UsuarioAuth usuario = authRepository.findById(id)
+                .orElseThrow(() -> new AuthException("Cuenta de acceso no encontrada con ID: " + id));
+        return generarTokenResponse(usuario);
+    }
+
+    public AuthDTO.TokenResponse actualizarRol(Long id, String nuevoRol) {
+        log.info("[auth-service] Actualizando rol de la cuenta ID: {} a {}", id, nuevoRol);
+        UsuarioAuth usuario = authRepository.findById(id).orElseThrow(() -> new AuthException("Cuenta no encontrada para actualizar."));
+
+        usuario.setRol(nuevoRol.toUpperCase());
+        return generarTokenResponse(authRepository.save(usuario));
+    }
+
+    public void desactivarCuenta(Long id) {
+        log.info("[auth-service] Solicitud para remover/desactivar acceso de cuenta ID: {}", id);
+        UsuarioAuth usuario = authRepository.findById(id).orElseThrow(() -> new AuthException("Cuenta no encontrada para eliminar."));
+
+        authRepository.delete(usuario);
+        log.info("[auth-service] Acceso eliminado con éxito para la cuenta ID: {}", id);
+    }
+
     private AuthDTO.TokenResponse generarTokenResponse(UsuarioAuth usuario) {
-        String tokenSimulado = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-                Base64.getEncoder().encodeToString(("user:" + usuario.getEmail() + ",role:" + usuario.getRol()).getBytes()) +
-                "." + UUID.randomUUID().toString().replace("-", "");
+        String tokenSimulado = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." + Base64.getEncoder().encodeToString(("user:" + usuario.getEmail() + ",role:" + usuario.getRol()).getBytes()) + "." + UUID.randomUUID().toString().replace("-", "");
 
         return AuthDTO.TokenResponse.builder()
                 .token(tokenSimulado)
