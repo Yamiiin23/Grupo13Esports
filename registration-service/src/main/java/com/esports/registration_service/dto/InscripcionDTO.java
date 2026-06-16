@@ -1,10 +1,32 @@
 package com.esports.registration_service.dto;
 
 import com.esports.registration_service.model.Inscripcion;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.time.LocalDateTime;
 
 public class InscripcionDTO {
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Request {
+        @NotNull(message = "El ID del torneo es obligatorio")
+        private Long torneoId;
+
+        @NotNull(message = "El ID del equipo es obligatorio")
+        private Long equipoId;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateStatusRequest {
+        @NotBlank(message = "El estado no puede estar vacío")
+        private String estado; // Recibe: PENDIENTE, ACEPTADA o RECHAZADA
+    }
 
     @Data
     @Builder
