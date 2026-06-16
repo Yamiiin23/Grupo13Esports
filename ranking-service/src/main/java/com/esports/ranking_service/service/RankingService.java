@@ -2,6 +2,8 @@ package com.esports.ranking_service.service;
 
 import com.esports.ranking_service.client.TournamentServiceClient;
 import com.esports.ranking_service.dto.RankingDTO;
+import com.esports.ranking_service.exception.RankingNotFoundException;
+import com.esports.ranking_service.exception.RankingValidationException;
 import com.esports.ranking_service.model.Ranking;
 import com.esports.ranking_service.repository.RankingRepository;
 import org.slf4j.Logger;
@@ -33,16 +35,17 @@ public class RankingService {
         try {
             tournamentClient.obtenerTorneoPorId(request.getTorneoId());
         } catch (Exception e) {
-            throw new IllegalStateException("El torneo especificado no existe.");
+            throw new RankingValidationException("El torneo especificado con ID " + request.getTorneoId() + " no existe en el sistema.");
         }
 
         if (rankingRepository.existsByTorneoIdAndParticipanteId(request.getTorneoId(), request.getParticipanteId())) {
-            throw new IllegalStateException("El participante ya está en el torneo.");
+            throw new RankingValidationException("El participante ya se encuentra registrado en la tabla de este torneo.");
         }
 
         Ranking nuevo = Ranking.builder()
                 .torneoId(request.getTorneoId())
                 .participanteId(request.getParticipanteId())
+                .estado(Ranking.EstadoRanking.ACTIVO)
                 .build();
 
         Ranking guardado = rankingRepository.save(nuevo);
@@ -54,16 +57,21 @@ public class RankingService {
     @Transactional(readOnly = true)
     public List<RankingDTO.Response> obtenerTabla(Long torneoId) {
         return rankingRepository.findByTorneoIdOrderByPosicion(torneoId).stream()
+                .filter(r -> r.getEstado() == Ranking.EstadoRanking.ACTIVO)
                 .map(RankingDTO.Response::fromEntity)
                 .toList();
     }
 
     public List<RankingDTO.Response> actualizarConResultado(Long torneoId, RankingDTO.ActualizarRequest request) {
         Ranking ganador = rankingRepository.findByTorneoIdAndParticipanteId(torneoId, request.getGanadorId())
-                .orElseThrow(() -> new IllegalArgumentException("Ganador no registrado en el torneo"));
+                .orElseThrow(() -> new RankingNotFoundException("Ganador no registrado en este torneo"));
 
         Ranking perdedor = rankingRepository.findByTorneoIdAndParticipanteId(torneoId, request.getPerdedorId())
-                .orElseThrow(() -> new IllegalArgumentException("Perdedor no registrado en el torneo"));
+                .orElseThrow(() -> new RankingNotFoundException("Perdedor no registrado en este torneo"));
+
+        if (ganador.getEstado() == Ranking.EstadoRanking.ANULADO || perdedor.getEstado() == Ranking.EstadoRanking.ANULADO) {
+            throw new RankingValidationException("No se pueden registrar resultados para participantes anulados o descalificados.");
+        }
 
         int difRondas = Math.abs(request.getPuntajeGanador() - request.getPuntajePerdedor());
 
@@ -75,19 +83,46 @@ public class RankingService {
 
         return recalcularPosiciones(torneoId);
     }
+
+    public List<RankingDTO.Response> eliminarParticipanteLogico(Long torneoId, Long participanteId, String justificacion) {
+        if (justificacion == null || justificacion.isBlank()) {
+            throw new RankingValidationException("La justificación de la baja es obligatoria.");
+        }
+
+        Ranking ranking = rankingRepository.findByTorneoIdAndParticipanteId(torneoId, participanteId)
+                .orElseThrow(() -> new RankingNotFoundException("El participante no pertenece a este torneo"));
+
+        if (ranking.getEstado() == Ranking.EstadoRanking.ANULADO) {
+            throw new RankingValidationException("El competidor ya fue dado de baja previamente.");
+        }
+
+        ranking.setEstado(Ranking.EstadoRanking.ANULADO);
+        ranking.setMotivoBaja(justificacion);
+        ranking.setPosicion(0);
+
+        rankingRepository.save(ranking);
+        log.info("[ranking-service] Participante ID={} anulado lógicamente del torneo ID={}", participanteId, torneoId);
+
+        return recalcularPosiciones(torneoId);
+    }
+
     private List<RankingDTO.Response> recalcularPosiciones(Long torneoId) {
-        List<Ranking> listaRepositorio = rankingRepository.findByTorneoIdOrderByPosicion(torneoId);
+        List<Ranking> todosLosRegistros = rankingRepository.findByTorneoIdOrderByPosicion(torneoId);
 
-        List<Ranking> lista = new ArrayList<>(listaRepositorio);
+        List<Ranking> activos = new ArrayList<>(todosLosRegistros.stream()
+                .filter(r -> r.getEstado() == Ranking.EstadoRanking.ACTIVO)
+                .toList());
 
-        lista.sort(Comparator.comparingInt(Ranking::getPuntos).reversed()
+        activos.sort(Comparator.comparingInt(Ranking::getPuntos).reversed()
                 .thenComparingInt(Ranking::getDiferencia).reversed());
 
-        for (int i = 0; i < lista.size(); i++) {
-            lista.get(i).setPosicion(i + 1);
+        for (int i = 0; i < activos.size(); i++) {
+            activos.get(i).setPosicion(i + 1);
         }
-        rankingRepository.saveAll(lista);
-        return lista.stream()
+
+        rankingRepository.saveAll(activos);
+
+        return activos.stream()
                 .map(RankingDTO.Response::fromEntity)
                 .toList();
     }
