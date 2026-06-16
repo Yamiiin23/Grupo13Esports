@@ -1,11 +1,9 @@
 package com.esports.registration_service.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.CONFLICT)
-public class InscripcionDuplicadaException extends RuntimeException {
+public class InscripcionDuplicadaException extends BusinessException {
     public InscripcionDuplicadaException(Long torneoId, Long equipoId) {
-        super("El equipo con ID " + equipoId + " ya se encuentra inscrito en el torneo ID " + torneoId);
+        super("El equipo con ID " + equipoId + " ya cuenta con una inscripción activa en el torneo ID " + torneoId, HttpStatus.BAD_REQUEST);
     }
 }
