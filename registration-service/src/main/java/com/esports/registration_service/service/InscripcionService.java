@@ -2,6 +2,8 @@ package com.esports.registration_service.service;
 
 import com.esports.registration_service.dto.InscripcionDTO;
 import com.esports.registration_service.exception.InscripcionDuplicadaException;
+import com.esports.registration_service.exception.InscripcionNotFoundException;
+import com.esports.registration_service.exception.InscripcionValidationException;
 import com.esports.registration_service.model.Inscripcion;
 import com.esports.registration_service.repository.InscripcionRepository;
 import org.slf4j.Logger;
@@ -25,8 +27,11 @@ public class InscripcionService {
     public InscripcionDTO.Response registrarEquipo(InscripcionDTO.Request request) {
         log.info("[registration-service] Procesando inscripción: Equipo ID={} en Torneo ID={}", request.getEquipoId(), request.getTorneoId());
 
-        if (inscripcionRepository.existsByTorneoIdAndEquipoId(request.getTorneoId(), request.getEquipoId())) {
-            log.warn("[registration-service] Conflicto: El equipo ya pertenece a este torneo.");
+        boolean yaExiste = inscripcionRepository.findByTorneoId(request.getTorneoId()).stream()
+                .anyMatch(i -> i.getEquipoId().equals(request.getEquipoId()) && i.getEstado() != Inscripcion.EstadoInscripcion.CANCELADA);
+
+        if (yaExiste) {
+            log.warn("[registration-service] Conflicto de negocio: El equipo ya tiene una solicitud vigente para este torneo.");
             throw new InscripcionDuplicadaException(request.getTorneoId(), request.getEquipoId());
         }
 
@@ -37,14 +42,12 @@ public class InscripcionService {
                 .build();
 
         Inscripcion guardada = inscripcionRepository.save(inscripcion);
-        log.info("[registration-service] Inscripción creada con éxito. ID={}, Estado={}", guardada.getId(), guardada.getEstado());
-
         return InscripcionDTO.Response.fromEntity(guardada);
     }
 
     @Transactional(readOnly = true)
     public List<InscripcionDTO.Response> listarInscripciones(Long torneoId) {
-        log.info("[registration-service] Listando inscripciones del sistema.");
+        log.info("[registration-service] Solicitando listado de inscripciones activas");
         List<Inscripcion> inscripciones = (torneoId != null)
                 ? inscripcionRepository.findByTorneoId(torneoId)
                 : inscripcionRepository.findAll();
@@ -55,30 +58,39 @@ public class InscripcionService {
     }
 
     public InscripcionDTO.Response actualizarEstado(Long id, InscripcionDTO.UpdateStatusRequest request) {
-        log.info("[registration-service] Actualizando estado de la inscripción ID={}", id);
-
         Inscripcion inscripcion = inscripcionRepository.findById(id)
-                .orElseThrow(() -> new com.esports.registration_service.exception.InscripcionNotFoundException(id));
+                .orElseThrow(() -> new InscripcionNotFoundException(id));
+
+        if (inscripcion.getEstado() == Inscripcion.EstadoInscripcion.CANCELADA) {
+            throw new InscripcionValidationException("No se puede cambiar el estado de una inscripción que ya fue CANCELADA por el competidor.");
+        }
 
         try {
             Inscripcion.EstadoInscripcion nuevoEstado = Inscripcion.EstadoInscripcion.valueOf(request.getEstado().toUpperCase());
             inscripcion.setEstado(nuevoEstado);
         } catch (IllegalArgumentException e) {
-            log.error("[registration-service] Estado invocado inválido: {}", request.getEstado());
-            throw new IllegalArgumentException("Estado inválido. Los permitidos son: PENDIENTE, ACEPTADA o RECHAZADA");
+            throw new InscripcionValidationException("Estado inválido. Los permitidos son de tipo: PENDIENTE, ACEPTADA o RECHAZADA");
         }
 
-        Inscripcion actualizada = inscripcionRepository.save(inscripcion);
-        log.info("[registration-service] Inscripción ID={} guardada con estado: {}", actualizada.getId(), actualizada.getEstado());
-
-        return InscripcionDTO.Response.fromEntity(actualizada);
+        return InscripcionDTO.Response.fromEntity(inscripcionRepository.save(inscripcion));
     }
 
-    public void cancelarInscripcion(Long id) {
-        log.info("[registration-service] Removiendo la inscripción ID={}", id);
+    public InscripcionDTO.Response cancelarInscripcionLogica(Long id, String motivo) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new InscripcionValidationException("El motivo de cancelación es mandatorio para resguardar la trazabilidad.");
+        }
+
         Inscripcion inscripcion = inscripcionRepository.findById(id)
-                .orElseThrow(() -> new com.esports.registration_service.exception.InscripcionNotFoundException(id));
-        inscripcionRepository.delete(inscripcion);
-        log.info("[registration-service] Inscripción ID={} eliminada correctamente.", id);
+                .orElseThrow(() -> new InscripcionNotFoundException(id));
+
+        if (inscripcion.getEstado() == Inscripcion.EstadoInscripcion.CANCELADA) {
+            throw new InscripcionValidationException("La solicitud de inscripción ya se encuentra cancelada.");
+        }
+
+        inscripcion.setEstado(Inscripcion.EstadoInscripcion.CANCELADA);
+        inscripcion.setMotivoCancelacion(motivo);
+
+        log.info("[registration-service] Inscripción ID={} dada de baja de forma lógica del sistema.", id);
+        return InscripcionDTO.Response.fromEntity(inscripcionRepository.save(inscripcion));
     }
 }

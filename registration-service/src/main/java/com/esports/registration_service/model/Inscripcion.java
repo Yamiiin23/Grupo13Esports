@@ -17,14 +17,17 @@ public class Inscripcion {
     private Long id;
 
     @Column(nullable = false)
-    private Long torneoId; // ID lógico correspondiente a tournament-service
+    private Long torneoId;
 
     @Column(nullable = false)
-    private Long equipoId; // ID lógico correspondiente a team-service
+    private Long equipoId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstadoInscripcion estado;
+
+    @Column(length = 300)
+    private String motivoCancelacion;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime fechaInscripcion;
@@ -38,6 +41,9 @@ public class Inscripcion {
     }
 
     public enum EstadoInscripcion {
-        PENDIENTE, ACEPTADA, RECHAZADA
+        PENDIENTE,
+        ACEPTADA,
+        RECHAZADA,
+        CANCELADA
     }
 }
