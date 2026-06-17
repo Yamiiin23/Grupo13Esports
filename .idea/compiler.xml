@@ -2,6 +2,17 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="sanction-service" />
+        <module name="result-service" />
+        <module name="team-service" />
+        <module name="msvc-gateway" />
+        <module name="ranking-service" />
+        <module name="msvc-eureka" />
+      </profile>
       <profile name="Annotation profile for esports-main-parent" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
@@ -16,15 +27,6 @@
         <module name="user-service" />
         <module name="game-service" />
       </profile>
-      <profile name="Maven default annotation processors profile" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <module name="sanction-service" />
-        <module name="result-service" />
-        <module name="team-service" />
-        <module name="ranking-service" />
-      </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
@@ -32,6 +34,8 @@
       <module name="auth-service" options="-parameters" />
       <module name="game-service" options="-parameters" />
       <module name="match-service" options="-parameters" />
+      <module name="msvc-eureka" options="-parameters" />
+      <module name="msvc-gateway" options="-parameters" />
       <module name="ranking-service" options="-parameters" />
       <module name="registration-service" options="-parameters" />
       <module name="result-service" options="-parameters" />

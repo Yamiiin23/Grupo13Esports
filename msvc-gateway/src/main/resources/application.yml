@@ -8,40 +8,40 @@ spring:
           # Cada ruta: si la URL entra por el patron 'predicates', el gateway la reenvia
           # a 'uri'. lb:// significa "busca este nombre en Eureka y balancea la carga".
           routes:
-            - id: msvc-medicos
-              uri: lb://msvc-medicos
+            - id: game-service
+              uri: lb://game-service
               predicates:
-                - Path=/api/v1/medicos/**,/api/v2/medicos/**
-            - id: msvc-pacientes
-              uri: lb://msvc-pacientes
+                - Path=/api/v1/juegos/**,/api/v2/juegos/**
+            - id: user-service
+              uri: lb://user-service
               predicates:
-                - Path=/api/v1/pacientes/**,/api/v2/pacientes/**
-            - id: msvc-atenciones
-              uri: lb://msvc-atenciones
+                - Path=/api/v1/usuarios/**,/api/v2/usuarios/**
+            - id: team-service
+              uri: lb://team-service
               predicates:
-                - Path=/api/v1/atenciones/**,/api/v2/atenciones/**
+                - Path=/api/v1/equipos/**,/api/v2/equipos/**
 
             # Rutas para el OpenAPI (JSON) de cada microservicio. El Swagger UI del gateway
             # las consume. Usan el prefijo /api-docs/<svc> (NO /v3/api-docs) para no chocar con
             # el /v3/api-docs propio del gateway. RewritePath lo traduce al /v3/api-docs real del servicio.
-            - id: medicos-api-docs
-              uri: lb://msvc-medicos
+            - id: juegos-api-docs
+              uri: lb://game-service
               predicates:
-                - Path=/api-docs/medicos
+                - Path=/api-docs/juegos
               filters:
-                - RewritePath=/api-docs/medicos, /v3/api-docs
-            - id: pacientes-api-docs
-              uri: lb://msvc-pacientes
+                - RewritePath=/api-docs/juegos, /v3/api-docs
+            - id: usuarios-api-docs
+              uri: lb://user-service
               predicates:
-                - Path=/api-docs/pacientes
+                - Path=/api-docs/usuarios
               filters:
-                - RewritePath=/api-docs/pacientes, /v3/api-docs
-            - id: atenciones-api-docs
-              uri: lb://msvc-atenciones
+                - RewritePath=/api-docs/usuarios, /v3/api-docs
+            - id: equipos-api-docs
+              uri: lb://team-service
               predicates:
-                - Path=/api-docs/atenciones
+                - Path=/api-docs/equipos
               filters:
-                - RewritePath=/api-docs/atenciones, /v3/api-docs
+                - RewritePath=/api-docs/equipos, /v3/api-docs
 
 # Punto de entrada unico: todo el trafico entra por aqui.
 server:
@@ -60,9 +60,9 @@ springdoc:
     path: /docs/swagger-ui.html
     # El desplegable apunta a los docs de cada servicio (ruteados por el gateway via lb://).
     urls:
-      - name: medicos
-        url: /api-docs/medicos
-      - name: pacientes
-        url: /api-docs/pacientes
-      - name: atenciones
-        url: /api-docs/atenciones
+      - name: juegos
+        url: /api-docs/juegos
+      - name: usuarios
+        url: /api-docs/usuarios
+      - name: equipos
+        url: /api-docs/equipos
