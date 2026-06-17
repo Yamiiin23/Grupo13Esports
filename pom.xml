@@ -20,5 +20,7 @@
         <module>team-service</module>
         <module>tournament-service</module>
         <module>user-service</module>
+        <module>msvc-eureka</module>
+        <module>msvc-gateway</module>
     </modules>
 </project>
