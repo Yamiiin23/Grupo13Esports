@@ -6,12 +6,12 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="msvc-gateway" />
-        <module name="ranking-service" />
-        <module name="msvc-eureka" />
         <module name="sanction-service" />
         <module name="result-service" />
         <module name="user-service" />
+        <module name="msvc-gateway" />
+        <module name="ranking-service" />
+        <module name="msvc-eureka" />
       </profile>
       <profile name="Annotation profile for esports-main-parent" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
