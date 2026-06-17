@@ -4,9 +4,11 @@ import com.esports.sanctionservice.controller.SancionControllerV2;
 import com.esports.sanctionservice.dto.SancionDTO;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
+import org.springframework.stereotype.Component;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
+@Component
 public class SancionModelAssembler implements RepresentationModelAssembler<SancionDTO.Response, EntityModel<SancionDTO.Response>> {
 
     @Override
