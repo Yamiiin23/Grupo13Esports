@@ -1,8 +1,8 @@
 package com.esports.teamservice;
 
 import com.esports.teamservice.client.ClientDTO;
-import com.esports.teamservice.client.GameServiceClient;
-import com.esports.teamservice.client.UserServiceClient;
+import com.esports.teamservice.client.GameClient;
+import com.esports.teamservice.client.UserClient;
 import com.esports.teamservice.dto.EquipoDTO;
 import com.esports.teamservice.exception.EquipoNotFoundException;
 import com.esports.teamservice.exception.MiembroDuplicadoException;
@@ -33,8 +33,8 @@ class EquipoServiceTest {
 
     @Mock private EquipoRepository       equipoRepository;
     @Mock private MiembroEquipoRepository miembroRepository;
-    @Mock private UserServiceClient       userClient;
-    @Mock private GameServiceClient       gameClient;
+    @Mock private UserClient userClient;
+    @Mock private GameClient gameClient;
 
     @InjectMocks
     private EquipoService equipoService;

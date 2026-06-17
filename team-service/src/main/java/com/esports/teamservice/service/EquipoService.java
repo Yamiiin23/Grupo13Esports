@@ -1,8 +1,8 @@
 package com.esports.teamservice.service;
 
 import com.esports.teamservice.client.ClientDTO;
-import com.esports.teamservice.client.GameServiceClient;
-import com.esports.teamservice.client.UserServiceClient;
+import com.esports.teamservice.client.GameClient;
+import com.esports.teamservice.client.UserClient;
 import com.esports.teamservice.dto.EquipoDTO;
 import com.esports.teamservice.exception.*;
 import com.esports.teamservice.model.Equipo;
@@ -25,13 +25,13 @@ public class EquipoService {
 
     private final EquipoRepository equipoRepository;
     private final MiembroEquipoRepository miembroRepository;
-    private final UserServiceClient userClient;
-    private final GameServiceClient gameClient;
+    private final UserClient userClient;
+    private final GameClient gameClient;
 
     public EquipoService(EquipoRepository equipoRepository,
                          MiembroEquipoRepository miembroRepository,
-                         UserServiceClient userClient,
-                         GameServiceClient gameClient) {
+                         UserClient userClient,
+                         GameClient gameClient) {
         this.equipoRepository  = equipoRepository;
         this.miembroRepository = miembroRepository;
         this.userClient        = userClient;
@@ -174,7 +174,7 @@ public class EquipoService {
 
     private void validarUsuarioPuedeCompetar(Long usuarioId, String rol) {
         try {
-            ClientDTO.UsuarioResumen usuario = userClient.obtenerResumenUsuario(usuarioId);
+            ClientDTO.UsuarioResumen usuario = userClient.findById(usuarioId);
             if (!usuario.isPuedeCompetar()) {
                 throw new IllegalStateException(rol + " seleccionado no esta disponible para competir");
             }
@@ -187,7 +187,7 @@ public class EquipoService {
 
     private void validarJuegoActivo(Long juegoId) {
         try {
-            ClientDTO.JuegoResumen juego = gameClient.obtenerJuego(juegoId);
+            ClientDTO.JuegoResumen juego = gameClient.findById(juegoId);
             if (!"ACTIVO".equals(juego.getEstado())) {
                 throw new IllegalStateException("El juego seleccionado no esta activo");
             }
