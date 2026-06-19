@@ -1,5 +1,6 @@
 package com.esports.tournament_service;
 
+import com.esports.tournament_service.controller.TorneoController;
 import com.esports.tournament_service.dto.TorneoDTO;
 import com.esports.tournament_service.exception.TorneoNotFoundException;
 import com.esports.tournament_service.exception.TorneoYaExisteException;
