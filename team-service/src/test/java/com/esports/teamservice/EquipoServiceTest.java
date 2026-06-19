@@ -1,6 +1,6 @@
 package com.esports.teamservice;
 
-import com.esports.teamservice.client.ClientDTO;
+import com.esports.teamservice.dto.ClientDTO;
 import com.esports.teamservice.client.GameClient;
 import com.esports.teamservice.client.UserClient;
 import com.esports.teamservice.dto.EquipoDTO;

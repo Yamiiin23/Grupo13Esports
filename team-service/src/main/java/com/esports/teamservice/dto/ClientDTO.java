@@ -1,4 +1,4 @@
-package com.esports.teamservice.client;
+package com.esports.teamservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
