@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
-@RequestMapping("/api/v1/partidas")
+@RequestMapping("/api/v2/partidas")
 @Tag(name = "Partidas", description= "Operaciones relacionadas con la gestión y calendarizacion de enfrentamiento")
 public class PartidaControllerV2 {
 
@@ -44,7 +44,6 @@ public class PartidaControllerV2 {
         log.info("[match-service] POST /api/v1/partidas - registrando nuevo enfrentamiento");
 
         PartidaDTO.Response response = partidaService.crearPartida(request);
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(assembler.toModel(response));

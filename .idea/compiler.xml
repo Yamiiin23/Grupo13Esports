@@ -13,6 +13,7 @@
         <module name="sanction-service" />
         <module name="result-service" />
         <module name="user-service" />
+        <module name="match-service" />
       </profile>
       <profile name="Annotation profile for esports-main-parent" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -23,7 +24,6 @@
         </processorPath>
         <module name="registration-service" />
         <module name="tournament-service" />
-        <module name="match-service" />
         <module name="game-service" />
         <module name="team-service" />
       </profile>

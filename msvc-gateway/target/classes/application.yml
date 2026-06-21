@@ -36,6 +36,10 @@ spring:
               uri: lb://auth-service
               predicates:
                   - Path=/api/v1/auth/**,/api/v2/auth/**
+            - id: match-service
+              uri: lb://match-service
+              predicates:
+                  - Path=/api/v1/partidas/**,/api/v2/partidas/**
 
             # Rutas para el OpenAPI (JSON) de cada microservicio. El Swagger UI del gateway
             # las consume. Usan el prefijo /api-docs/<svc> (NO /v3/api-docs) para no chocar con
@@ -82,6 +86,12 @@ spring:
                   - Path=/api-docs/auth
               filters:
                   - RewritePath=/api-docs/auth, /v3/api-docs
+            - id: partidas-api-docs
+              uri: lb://match-service
+              predicates:
+                  - Path=/api-docs/partidas
+              filters:
+                  - RewritePath=/api-docs/partidas, /v3/api-docs
 
 # Punto de entrada unico: todo el trafico entra por aqui.
 server:
@@ -114,3 +124,5 @@ springdoc:
         url: /api-docs/sanciones
       - name: auth
         url: /api-docs/auth
+      - name: partidas
+        url: /api-docs/partidas

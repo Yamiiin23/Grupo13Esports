@@ -93,7 +93,7 @@ public class PartidaController {
             @ApiResponse(responseCode = "404", description = "La partida no existe")
     })
     public ResponseEntity<Void> eliminarPartida(@PathVariable Long id) {
-        log.info("[match-service] DELETE /api/v1/partidas/{}", id);
+        log.info("[match-service] DELETE /api/v2/partidas/{}", id);
         partidaService.eliminarPartida(id);
         return ResponseEntity.noContent().build();
     }
