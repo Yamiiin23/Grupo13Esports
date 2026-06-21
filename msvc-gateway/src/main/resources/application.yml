@@ -20,6 +20,18 @@ spring:
               uri: lb://team-service
               predicates:
                 - Path=/api/v1/equipos/**,/api/v2/equipos/**
+            - id: ranking-service
+              uri: lb://ranking-service
+              predicates:
+                - Path=/api/v1/rankings/**,/api/v2/rankings/**
+            - id: result-service
+              uri: lb://result-service
+              predicates:
+                - Path=/api/v1/resultados/**,/api/v2/resultados/**
+            - id: sanction-service
+              uri: lb://sanction-service
+              predicates:
+                - Path=/api/v1/sanciones/**,/api/v2/sanciones/**
 
             # Rutas para el OpenAPI (JSON) de cada microservicio. El Swagger UI del gateway
             # las consume. Usan el prefijo /api-docs/<svc> (NO /v3/api-docs) para no chocar con
@@ -42,6 +54,24 @@ spring:
                 - Path=/api-docs/equipos
               filters:
                 - RewritePath=/api-docs/equipos, /v3/api-docs
+            - id: rankings-api-docs
+              uri: lb://ranking-service
+              predicates:
+                - Path=/api-docs/rankings
+              filters:
+                - RewritePath=/api-docs/rankings, /v3/api-docs
+            - id: resultados-api-docs
+              uri: lb://result-service
+              predicates:
+                - Path=/api-docs/resultados
+              filters:
+                - RewritePath=/api-docs/resultados, /v3/api-docs
+            - id: sanciones-api-docs
+              uri: lb://sanction-service
+              predicates:
+                - Path=/api-docs/sanciones
+              filters:
+                - RewritePath=/api-docs/sanciones, /v3/api-docs
 
 # Punto de entrada unico: todo el trafico entra por aqui.
 server:
@@ -66,3 +96,9 @@ springdoc:
         url: /api-docs/usuarios
       - name: equipos
         url: /api-docs/equipos
+      - name: rankings
+        url: /api-docs/rankings
+      - name: resultados
+        url: /api-docs/resultados
+      - name: sanciones
+        url: /api-docs/sanciones
