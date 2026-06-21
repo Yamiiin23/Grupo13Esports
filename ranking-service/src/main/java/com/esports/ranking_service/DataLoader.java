@@ -1,4 +1,4 @@
-package com.esports.ranking_service.config;
+package com.esports.ranking_service;
 
 import com.esports.ranking_service.model.Ranking;
 import com.esports.ranking_service.repository.RankingRepository;
@@ -43,4 +43,3 @@ public class DataLoader implements CommandLineRunner {
         }
     }
 }
-

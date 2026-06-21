@@ -1,4 +1,4 @@
-package com.esports.resultservice.config;
+package com.esports.resultservice;
 
 import com.esports.resultservice.model.Resultado;
 import com.esports.resultservice.repository.ResultadoRepository;

@@ -1,4 +1,4 @@
-package com.esports.sanctionservice.config;
+package com.esports.sanctionservice;
 
 import com.esports.sanctionservice.model.Sancion;
 import com.esports.sanctionservice.repository.SancionRepository;
