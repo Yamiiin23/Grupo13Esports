@@ -1,6 +1,6 @@
 package com.esports.ranking_service;
 
-import com.esports.ranking_service.client.TournamentServiceClient;
+import com.esports.ranking_service.client.TournamentClient;
 import com.esports.ranking_service.dto.RankingDTO;
 import com.esports.ranking_service.model.Ranking;
 import com.esports.ranking_service.repository.RankingRepository;
@@ -27,14 +27,14 @@ class RankingServiceTest {
 	private RankingRepository rankingRepository;
 
 	@Mock
-	private TournamentServiceClient tournamentClient;
+	private TournamentClient tournamentClient;
 
 	@InjectMocks
 	private RankingService rankingService;
 
 	private Ranking rankingMock;
 	private RankingDTO.Request requestRegistro;
-	private TournamentServiceClient.TorneoResumen torneoResumenMock;
+	private TournamentClient.TorneoResumen torneoResumenMock;
 
 	@BeforeEach
 	void setUp() {
@@ -54,7 +54,7 @@ class RankingServiceTest {
 				.participanteId(50L)
 				.build();
 
-		torneoResumenMock = new TournamentServiceClient.TorneoResumen(100L, "Torneo de Esports", "ACTIVO");
+		torneoResumenMock = new TournamentClient.TorneoResumen(100L, "Torneo de Esports", "ACTIVO");
 	}
 
 	@Test

@@ -1,6 +1,6 @@
 package com.esports.ranking_service.service;
 
-import com.esports.ranking_service.client.TournamentServiceClient;
+import com.esports.ranking_service.client.TournamentClient;
 import com.esports.ranking_service.dto.RankingDTO;
 import com.esports.ranking_service.exception.RankingNotFoundException;
 import com.esports.ranking_service.exception.RankingValidationException;
@@ -22,9 +22,9 @@ public class RankingService {
     private static final Logger log = LoggerFactory.getLogger(RankingService.class);
 
     private final RankingRepository rankingRepository;
-    private final TournamentServiceClient tournamentClient;
+    private final TournamentClient tournamentClient;
 
-    public RankingService(RankingRepository rankingRepository, TournamentServiceClient tournamentClient) {
+    public RankingService(RankingRepository rankingRepository, TournamentClient tournamentClient) {
         this.rankingRepository = rankingRepository;
         this.tournamentClient = tournamentClient;
     }

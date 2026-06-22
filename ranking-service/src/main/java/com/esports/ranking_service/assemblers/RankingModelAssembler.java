@@ -14,8 +14,8 @@ public class RankingModelAssembler implements RepresentationModelAssembler<Ranki
     @Override
     public EntityModel<RankingDTO.Response> toModel(RankingDTO.Response ranking) {
         return EntityModel.of(ranking,
-                linkTo(methodOn(RankingControllerV2.class).obtenerTabla(ranking.getTorneoId())).withRel("tabla_torneo"));
-
+                linkTo(methodOn(RankingControllerV2.class).obtenerTabla(ranking.getTorneoId())).withRel("tabla_torneo"),
+                linkTo(methodOn(RankingControllerV2.class).obtenerTabla(ranking.getTorneoId())).withSelfRel()
+        );
     }
-
 }
