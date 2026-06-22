@@ -40,6 +40,10 @@ spring:
               uri: lb://match-service
               predicates:
                   - Path=/api/v1/partidas/**,/api/v2/partidas/**
+            - id: tournament-service
+              uri: lb://tournament-service
+              predicates:
+                - Path=/api/v1/torneos/**,/api/v2/torneos/**
 
             # Rutas para el OpenAPI (JSON) de cada microservicio. El Swagger UI del gateway
             # las consume. Usan el prefijo /api-docs/<svc> (NO /v3/api-docs) para no chocar con
@@ -92,6 +96,12 @@ spring:
                   - Path=/api-docs/partidas
               filters:
                   - RewritePath=/api-docs/partidas, /v3/api-docs
+            - id: torneos-api-docs
+              uri: lb://tournament-service
+              predicates:
+                - Path=/api-docs/torneos
+              filters:
+                - RewritePath=/api-docs/torneos, /v3/api-docs
 
 # Punto de entrada unico: todo el trafico entra por aqui.
 server:
@@ -126,3 +136,5 @@ springdoc:
         url: /api-docs/auth
       - name: partidas
         url: /api-docs/partidas
+      - name: torneos
+        url: /api-docs/torneos
