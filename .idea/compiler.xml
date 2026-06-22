@@ -11,6 +11,7 @@
         <module name="ranking-service" />
         <module name="msvc-eureka" />
         <module name="sanction-service" />
+        <module name="registration-service" />
         <module name="result-service" />
         <module name="tournament-service" />
         <module name="user-service" />
@@ -23,7 +24,6 @@
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
         </processorPath>
-        <module name="registration-service" />
         <module name="game-service" />
         <module name="team-service" />
       </profile>
