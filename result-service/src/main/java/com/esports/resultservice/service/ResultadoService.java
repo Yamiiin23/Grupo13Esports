@@ -1,6 +1,6 @@
 package com.esports.resultservice.service;
 
-import com.esports.resultservice.client.MatchServiceClient;
+import com.esports.resultservice.client.MatchClient;
 import com.esports.resultservice.dto.ResultadoDTO;
 import com.esports.resultservice.exception.ResultadoNotFoundException;
 import com.esports.resultservice.model.Resultado;
@@ -20,10 +20,10 @@ public class ResultadoService {
     private static final Logger log = LoggerFactory.getLogger(ResultadoService.class);
 
     private final ResultadoRepository resultadoRepository;
-    private final MatchServiceClient  matchClient;
+    private final MatchClient matchClient;
 
     public ResultadoService(ResultadoRepository resultadoRepository,
-                            MatchServiceClient matchClient) {
+                            MatchClient matchClient) {
         this.resultadoRepository = resultadoRepository;
         this.matchClient         = matchClient;
     }
@@ -33,7 +33,7 @@ public class ResultadoService {
         log.info("[result-service] Registrando resultado. partidaId={}, ganadorId={}",
                 request.getPartidaId(), request.getGanadorId());
 
-        MatchServiceClient.PartidaResumen partida = obtenerPartidaValida(request.getPartidaId());
+        MatchClient.PartidaResumen partida = obtenerPartidaValida(request.getPartidaId());
 
         if (resultadoRepository.existsByPartidaId(request.getPartidaId())) {
             throw new IllegalStateException(
@@ -97,7 +97,7 @@ public class ResultadoService {
         }
 
         if (!resultado.getGanadorId().equals(request.getGanadorId())) {
-            MatchServiceClient.PartidaResumen partida = obtenerPartidaValida(resultado.getPartidaId());
+            MatchClient.PartidaResumen partida = obtenerPartidaValida(resultado.getPartidaId());
             validarGanador(request.getGanadorId(), partida);
         }
 
@@ -153,9 +153,9 @@ public class ResultadoService {
                 });
     }
 
-    private MatchServiceClient.PartidaResumen obtenerPartidaValida(Long partidaId) {
+    private MatchClient.PartidaResumen obtenerPartidaValida(Long partidaId) {
         try {
-            MatchServiceClient.PartidaResumen partida = matchClient.obtenerPartida(partidaId);
+            MatchClient.PartidaResumen partida = matchClient.obtenerPartida(partidaId);
             if (!"EN_CURSO".equals(partida.getEstado()) && !"FINALIZADA".equals(partida.getEstado())) {
                 throw new IllegalStateException(
                     "Solo se pueden registrar resultados para partidas EN_CURSO o FINALIZADA. " +
@@ -171,7 +171,7 @@ public class ResultadoService {
         }
     }
 
-    private void validarGanador(Long ganadorId, MatchServiceClient.PartidaResumen partida) {
+    private void validarGanador(Long ganadorId, MatchClient.PartidaResumen partida) {
         boolean esParticipante = ganadorId.equals(partida.getParticipanteAId())
                               || ganadorId.equals(partida.getParticipanteBId());
         if (!esParticipante) {
@@ -186,7 +186,7 @@ public class ResultadoService {
     private void finalizarPartida(Long partidaId) {
         try {
             matchClient.cambiarEstadoPartida(partidaId,
-                new MatchServiceClient.EstadoRequest("FINALIZADA", "Resultado validado por result-service"));
+                new MatchClient.EstadoRequest("FINALIZADA", "Resultado validado por result-service"));
             log.info("[result-service] Partida ID={} marcada como FINALIZADA en match-service", partidaId);
         } catch (FeignException e) {
             log.warn("[result-service] No se pudo finalizar partida ID={} en match-service: {}", partidaId, e.getMessage());

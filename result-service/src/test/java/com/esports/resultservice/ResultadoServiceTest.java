@@ -1,6 +1,6 @@
 package com.esports.resultservice;
 
-import com.esports.resultservice.client.MatchServiceClient;
+import com.esports.resultservice.client.MatchClient;
 import com.esports.resultservice.dto.ResultadoDTO;
 import com.esports.resultservice.exception.ResultadoNotFoundException;
 import com.esports.resultservice.model.Resultado;
@@ -25,17 +25,17 @@ import static org.mockito.Mockito.*;
 class ResultadoServiceTest {
 
     @Mock private ResultadoRepository resultadoRepository;
-    @Mock private MatchServiceClient   matchClient;
+    @Mock private MatchClient matchClient;
 
     @InjectMocks private ResultadoService resultadoService;
 
     private Resultado resultadoBase;
     private ResultadoDTO.Request requestValido;
-    private MatchServiceClient.PartidaResumen partidaEnCurso;
+    private MatchClient.PartidaResumen partidaEnCurso;
 
     @BeforeEach
     void setUp() {
-        partidaEnCurso = new MatchServiceClient.PartidaResumen(
+        partidaEnCurso = new MatchClient.PartidaResumen(
                 1L, 1L, 10L, 20L, "Semifinal", "EN_CURSO", false);
 
         resultadoBase = Resultado.builder()
@@ -95,8 +95,8 @@ class ResultadoServiceTest {
     @Test
     @DisplayName("Debe rechazar si la partida no está EN_CURSO o FINALIZADA")
     void crearResultado_partidaProgramada() {
-        MatchServiceClient.PartidaResumen programada =
-            new MatchServiceClient.PartidaResumen(1L, 1L, 10L, 20L, "Semifinal", "PROGRAMADA", true);
+        MatchClient.PartidaResumen programada =
+            new MatchClient.PartidaResumen(1L, 1L, 10L, 20L, "Semifinal", "PROGRAMADA", true);
         when(matchClient.obtenerPartida(1L)).thenReturn(programada);
 
         assertThatThrownBy(() -> resultadoService.crearResultado(requestValido))
