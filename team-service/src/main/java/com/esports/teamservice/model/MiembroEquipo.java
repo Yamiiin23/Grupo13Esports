@@ -26,7 +26,7 @@ public class MiembroEquipo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonIgnore // 2. SE AGREGÓ ESTA ANOTACIÓN PARA CORTAR EL BUCLE JSON
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "equipo_id", nullable = false)
     private Equipo equipo;

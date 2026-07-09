@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "match-service") // URL removida. Eureka resolverá automáticamente la dirección del servicio de partidas.
+@FeignClient(name = "match-service")
 public interface MatchClient {
 
     @GetMapping("/api/v1/partidas/{id}")

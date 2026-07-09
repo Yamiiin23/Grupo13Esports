@@ -25,7 +25,7 @@ public class DataLoader implements CommandLineRunner {
             log.info("[match-service] Base de datos vacía. Población automática de datos de prueba en marcha...");
 
             Partida partida1 = Partida.builder()
-                    .torneoId(1L) // Copa de Campeones (Asumiendo que existe en tournament-service)
+                    .torneoId(1L)
                     .equipoLocalId(10L)
                     .equipoVisitanteId(11L)
                     .estado(Partida.EstadoPartida.PENDIENTE)

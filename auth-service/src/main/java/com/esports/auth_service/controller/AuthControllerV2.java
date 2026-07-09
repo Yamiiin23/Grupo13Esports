@@ -21,13 +21,10 @@ public class AuthControllerV2 {
     private final AuthRepository repository;
     private final AuthModelAssembler assembler;
 
-    // Inyectamos el repositorio real y el Assembler de HATEOAS
     public AuthControllerV2(AuthRepository repository, AuthModelAssembler assembler) {
         this.repository = repository;
         this.assembler = assembler;
     }
-
-    // AHORA SÍ: Buscamos en la BD y le pegamos los enlaces HATEOAS
     @GetMapping
     public ResponseEntity<CollectionModel<EntityModel<UsuarioAuth>>> getAll() {
         List<EntityModel<UsuarioAuth>> auths = repository.findAll().stream()
