@@ -102,7 +102,7 @@ class EquipoServiceTest {
         // --- 2. WHEN & 3. THEN (Act & Assert combinados para excepciones) ---
         assertThatThrownBy(() -> equipoService.crearEquipo(requestValido))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no puede competir");
+                .hasMessageContaining("disponible para competir");
 
         verify(equipoRepository, never()).save(any());
     }
@@ -119,7 +119,7 @@ class EquipoServiceTest {
         // --- 2. WHEN & 3. THEN (Act & Assert combinados) ---
         assertThatThrownBy(() -> equipoService.crearEquipo(requestValido))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no está activo");
+                .hasMessageContaining("no esta activo");
 
         verify(equipoRepository, never()).save(any());
     }
