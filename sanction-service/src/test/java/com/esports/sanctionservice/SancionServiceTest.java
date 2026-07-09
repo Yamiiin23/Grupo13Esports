@@ -4,6 +4,7 @@ import com.esports.sanctionservice.client.TeamServiceClient;
 import com.esports.sanctionservice.client.UserServiceClient;
 import com.esports.sanctionservice.dto.SancionDTO;
 import com.esports.sanctionservice.exception.SancionNotFoundException;
+import com.esports.sanctionservice.exception.SancionValidationException;
 import com.esports.sanctionservice.model.Sancion;
 import com.esports.sanctionservice.repository.SancionRepository;
 import com.esports.sanctionservice.service.SancionService;
@@ -82,7 +83,7 @@ class SancionServiceTest {
         requestValido.setEquipoId(null);
 
         assertThatThrownBy(() -> sancionService.crearSancion(requestValido))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(SancionValidationException.class)
                 .hasMessageContaining("destinatario");
 
         verify(sancionRepository, never()).save(any());
@@ -94,7 +95,7 @@ class SancionServiceTest {
         requestValido.setFechaFin(requestValido.getFechaInicio().minusDays(1));
 
         assertThatThrownBy(() -> sancionService.crearSancion(requestValido))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(SancionValidationException.class)
                 .hasMessageContaining("posterior");
     }
 
@@ -140,7 +141,7 @@ class SancionServiceTest {
         when(sancionRepository.findById(1L)).thenReturn(Optional.of(sancionBase));
 
         assertThatThrownBy(() -> sancionService.cerrarSancion(1L, "x"))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(SancionValidationException.class)
                 .hasMessageContaining("CERRADA");
     }
 

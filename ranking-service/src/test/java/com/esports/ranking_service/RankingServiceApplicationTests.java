@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.esports.ranking_service.exception.RankingValidationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -73,11 +74,11 @@ class RankingServiceTest {
 	}
 
 	@Test
-	@DisplayName("Debería lanzar IllegalStateException si el torneo no existe")
+	@DisplayName("Debería lanzar RankingValidationException si el torneo no existe")
 	void registrarParticipanteTorneoNoExiste() {
 		when(tournamentClient.obtenerTorneoPorId(100L)).thenThrow(new RuntimeException("Error"));
 
-		assertThrows(IllegalStateException.class, () -> {
+		assertThrows(RankingValidationException.class, () -> {
 			rankingService.registrarParticipante(requestRegistro);
 		});
 	}

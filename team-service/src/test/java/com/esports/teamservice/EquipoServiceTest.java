@@ -72,8 +72,8 @@ class EquipoServiceTest {
     void crearEquipo_exitoso() {
         // --- 1. GIVEN (Arrange - Configuración) ---
         when(equipoRepository.existsByNombreIgnoreCase("Team Phantom")).thenReturn(false);
-        when(userClient.obtenerResumenUsuario(10L)).thenReturn(usuarioActivo);
-        when(gameClient.obtenerJuego(5L)).thenReturn(juegoActivo);
+        when(userClient.findById(10L)).thenReturn(usuarioActivo);
+        when(gameClient.findById(5L)).thenReturn(juegoActivo);
         when(equipoRepository.save(any(Equipo.class))).thenReturn(equipoBase);
         when(miembroRepository.save(any(MiembroEquipo.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -86,8 +86,8 @@ class EquipoServiceTest {
         assertThat(result.getEstado()).isEqualTo("ACTIVO");
         assertThat(result.isPuedeInscribirse()).isTrue();
 
-        verify(userClient).obtenerResumenUsuario(10L);
-        verify(gameClient).obtenerJuego(5L);
+        verify(userClient).findById(10L);
+        verify(gameClient).findById(5L);
         verify(equipoRepository).save(any(Equipo.class));
     }
 
@@ -97,7 +97,7 @@ class EquipoServiceTest {
         // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.existsByNombreIgnoreCase("Team Phantom")).thenReturn(false);
         ClientDTO.UsuarioResumen sancionado = new ClientDTO.UsuarioResumen(10L, "SancionadoGG", "JUGADOR", "SANCIONADO", false);
-        when(userClient.obtenerResumenUsuario(10L)).thenReturn(sancionado);
+        when(userClient.findById(10L)).thenReturn(sancionado);
 
         // --- 2. WHEN & 3. THEN (Act & Assert combinados para excepciones) ---
         assertThatThrownBy(() -> equipoService.crearEquipo(requestValido))
@@ -112,9 +112,9 @@ class EquipoServiceTest {
     void crearEquipo_juegoInactivo_lanzaExcepcion() {
         // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.existsByNombreIgnoreCase("Team Phantom")).thenReturn(false);
-        when(userClient.obtenerResumenUsuario(10L)).thenReturn(usuarioActivo);
+        when(userClient.findById(10L)).thenReturn(usuarioActivo);
         ClientDTO.JuegoResumen inactivo = new ClientDTO.JuegoResumen(5L, "Juego Viejo", "1v1", 1, "INACTIVO");
-        when(gameClient.obtenerJuego(5L)).thenReturn(inactivo);
+        when(gameClient.findById(5L)).thenReturn(inactivo);
 
         // --- 2. WHEN & 3. THEN (Act & Assert combinados) ---
         assertThatThrownBy(() -> equipoService.crearEquipo(requestValido))
@@ -156,7 +156,7 @@ class EquipoServiceTest {
         // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.findById(1L)).thenReturn(Optional.of(equipoBase));
         ClientDTO.UsuarioResumen nuevoJugador = new ClientDTO.UsuarioResumen(20L, "NuevoGG", "JUGADOR", "ACTIVO", true);
-        when(userClient.obtenerResumenUsuario(20L)).thenReturn(nuevoJugador);
+        when(userClient.findById(20L)).thenReturn(nuevoJugador);
         when(miembroRepository.existsByEquipoIdAndUsuarioId(1L, 20L)).thenReturn(false);
         when(miembroRepository.save(any(MiembroEquipo.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -176,7 +176,7 @@ class EquipoServiceTest {
     void agregarMiembro_duplicado_lanzaExcepcion() {
         // --- 1. GIVEN (Arrange) ---
         when(equipoRepository.findById(1L)).thenReturn(Optional.of(equipoBase));
-        when(userClient.obtenerResumenUsuario(10L)).thenReturn(usuarioActivo);
+        when(userClient.findById(10L)).thenReturn(usuarioActivo);
         when(miembroRepository.existsByEquipoIdAndUsuarioId(1L, 10L)).thenReturn(true);
 
         EquipoDTO.MiembroRequest miembroRequest = EquipoDTO.MiembroRequest.builder()
