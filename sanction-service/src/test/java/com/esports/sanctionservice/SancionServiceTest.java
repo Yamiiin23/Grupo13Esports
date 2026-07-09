@@ -25,13 +25,14 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Pruebas Unitarias del Módulo SancionService")
 class SancionServiceTest {
+    @Mock private SancionRepository sancionRepository;
+    @Mock private UserServiceClient userClient;
+    @Mock private TeamServiceClient teamClient;
 
-    @Mock private SancionRepository  sancionRepository;
-    @Mock private UserServiceClient   userClient;
-    @Mock private TeamServiceClient   teamClient;
-
-    @InjectMocks private SancionService sancionService;
+    @InjectMocks
+    private SancionService sancionService;
 
     private Sancion sancionBase;
     private SancionDTO.Request requestValido;
@@ -66,14 +67,14 @@ class SancionServiceTest {
     void crearSancion_exitoso() {
         when(userClient.obtenerResumenUsuario(10L))
                 .thenReturn(new UserServiceClient.UsuarioResumen(10L, "GamerX", "JUGADOR", "ACTIVO", true));
-        when(sancionRepository.save(any())).thenReturn(sancionBase);
+        when(sancionRepository.save(any(Sancion.class))).thenReturn(sancionBase);
 
         SancionDTO.Response result = sancionService.crearSancion(requestValido);
 
         assertThat(result).isNotNull();
         assertThat(result.getEstado()).isEqualTo("ACTIVA");
         assertThat(result.isBloqueante()).isTrue();
-        verify(sancionRepository).save(any());
+        verify(sancionRepository).save(any(Sancion.class));
     }
 
     @Test
@@ -102,7 +103,7 @@ class SancionServiceTest {
     @Test
     @DisplayName("verificarBloqueoUsuario devuelve bloqueado=true cuando hay sanción activa")
     void verificarBloqueoUsuario_bloqueado() {
-        when(sancionRepository.findSancionesBloqueantesUsuario(eq(10L), any()))
+        when(sancionRepository.findSancionesBloqueantesUsuario(anyLong(), any(LocalDateTime.class)))
                 .thenReturn(List.of(sancionBase));
 
         SancionDTO.VerificacionResponse result = sancionService.verificarBloqueoUsuario(10L);
@@ -114,7 +115,7 @@ class SancionServiceTest {
     @Test
     @DisplayName("verificarBloqueoUsuario devuelve bloqueado=false cuando no hay sanciones")
     void verificarBloqueoUsuario_libre() {
-        when(sancionRepository.findSancionesBloqueantesUsuario(eq(10L), any()))
+        when(sancionRepository.findSancionesBloqueantesUsuario(anyLong(), any(LocalDateTime.class)))
                 .thenReturn(List.of());
 
         SancionDTO.VerificacionResponse result = sancionService.verificarBloqueoUsuario(10L);
@@ -126,7 +127,7 @@ class SancionServiceTest {
     @DisplayName("Debe cerrar sanción correctamente")
     void cerrarSancion_exitoso() {
         when(sancionRepository.findById(1L)).thenReturn(Optional.of(sancionBase));
-        when(sancionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(sancionRepository.save(any(Sancion.class))).thenAnswer(inv -> inv.getArgument(0));
 
         SancionDTO.Response result = sancionService.cerrarSancion(1L, "Cumplida");
 
@@ -139,7 +140,6 @@ class SancionServiceTest {
     void cerrarSancion_yaCerrada_lanzaExcepcion() {
         sancionBase.setEstado(Sancion.EstadoSancion.CERRADA);
         when(sancionRepository.findById(1L)).thenReturn(Optional.of(sancionBase));
-
         assertThatThrownBy(() -> sancionService.cerrarSancion(1L, "x"))
                 .isInstanceOf(SancionValidationException.class)
                 .hasMessageContaining("CERRADA");
