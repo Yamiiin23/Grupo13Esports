@@ -19,12 +19,11 @@ jugadores, equipos, torneos, inscripciones, partidas, resultados, rankings y san
 
 ## Tecnologias utilizadas
 
-- Java 17
+- Java 21
 - Spring Boot 3.2.5
 - Spring Data JPA + Hibernate
 - Spring Cloud OpenFeign (comunicacion entre microservicios)
 - Spring Security + JWT (auth-service)
-- MySQL 8
 - Maven
 - Lombok
 - JUnit 5 + Mockito (pruebas unitarias)
@@ -271,6 +270,9 @@ esports-arena-manager/
 ├── result-service/
 ├── ranking-service/
 ├── sanction-service/
+├── msvc-service/
+├── msvc-eureka/
+├── pom.xml/
 └── README.md
 ```
 
@@ -295,6 +297,5 @@ mvn test
 - **Bean Validation** (JSR 380) en todos los DTOs de entrada
 - **@ControllerAdvice** para manejo centralizado de errores en cada servicio
 - **SLF4J** para logs estructurados en todas las capas
-- **Soft delete** - desactivacion logica en lugar de borrado fisico
 - **OpenFeign** para comunicacion entre microservicios con manejo de timeouts
 - **ResponseEntity** en todos los endpoints con codigos HTTP adecuados
