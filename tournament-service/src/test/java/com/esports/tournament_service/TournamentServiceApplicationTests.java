@@ -47,6 +47,7 @@ class TorneoServiceTest {
 		torneoRequest = TorneoDTO.Request.builder()
 				.nombre("Copa de Campeones")
 				.gameId(99L)
+				.maxParticipantes(8)
 				.build();
 	}
 
@@ -68,7 +69,8 @@ class TorneoServiceTest {
 	void crearTorneoNombreDuplicado() {
 		when(torneoRepository.existsByNombreIgnoreCase(torneoRequest.getNombre())).thenReturn(true);
 		assertThrows(TorneoYaExisteException.class, () -> {
-			torneoService.crearTorneo(torneoRequest);});
+			torneoService.crearTorneo(torneoRequest);
+		});
 		verify(torneoRepository, never()).save(any(Torneo.class));
 	}
 
@@ -103,6 +105,7 @@ class TorneoServiceTest {
 	@Test
 	@DisplayName("Debería actualizar los datos del torneo correctamente si no hay conflicto de nombres")
 	void actualizarTorneoExitoso() {
+		torneoMock.setEstado(Torneo.EstadoTorneo.INSCRIPCION);
 		TorneoDTO.Request nuevoRequest = TorneoDTO.Request.builder()
 				.nombre("Liga de Verano")
 				.gameId(88L)
@@ -119,32 +122,44 @@ class TorneoServiceTest {
 	@Test
 	@DisplayName("Debería lanzar TorneoYaExisteException al actualizar si el nuevo nombre ya está en uso por otro torneo")
 	void actualizarTorneoNombreEnUso() {
+		torneoMock.setEstado(Torneo.EstadoTorneo.INSCRIPCION);
 		TorneoDTO.Request nuevoRequest = TorneoDTO.Request.builder()
 				.nombre("Torneo Existente")
 				.gameId(99L)
 				.build();
 		when(torneoRepository.findById(1L)).thenReturn(Optional.of(torneoMock));
 		when(torneoRepository.existsByNombreIgnoreCase("Torneo Existente")).thenReturn(true);
-		assertThrows(TorneoYaExisteException.class, () -> {torneoService.actualizarTorneo(1L, nuevoRequest);
+		assertThrows(TorneoYaExisteException.class, () -> {
+			torneoService.actualizarTorneo(1L, nuevoRequest);
 		});
 		verify(torneoRepository, never()).save(any(Torneo.class));
 	}
 
 	@Test
-	@DisplayName("Debería eliminar el torneo si el ID existe")
+	@DisplayName("Debería eliminar lógicamente el torneo")
 	void eliminarTorneoExitoso() {
+		// 1. Preparamos el torneo simulado
+		torneoMock.setEstado(Torneo.EstadoTorneo.INSCRIPCION);
 		when(torneoRepository.findById(1L)).thenReturn(Optional.of(torneoMock));
-		torneoService.eliminarTorneo(1L);
-		verify(torneoRepository, times(1)).delete(torneoMock);
+		when(torneoRepository.save(any(Torneo.class))).thenReturn(torneoMock);
+
+		// 2. Ejecutamos el nuevo método con su justificación
+		torneoService.eliminarTorneoLogico(1L, "Cancelado por el administrador");
+
+		// 3. Verificamos lo más básico: que cambió a ANULADO y se guardó
+		assertEquals(Torneo.EstadoTorneo.ANULADO, torneoMock.getEstado());
+		verify(torneoRepository).save(torneoMock);
 	}
 
 	@Test
-	@DisplayName("Debería lanzar TorneoNotFoundException al intentar eliminar un ID inexistente")
+	@DisplayName("Debería dar error si el torneo a eliminar no existe")
 	void eliminarTorneoNoEncontrado() {
+		// 1. Simulamos que la base de datos no encuentra el ID
 		when(torneoRepository.findById(1L)).thenReturn(Optional.empty());
+
+		// 2. Verificamos que lance la excepción simple
 		assertThrows(TorneoNotFoundException.class, () -> {
-			torneoService.eliminarTorneo(1L);
+			torneoService.eliminarTorneoLogico(1L, "Cancelado por el administrador");
 		});
-		verify(torneoRepository, never()).delete(any(Torneo.class));
 	}
 }
